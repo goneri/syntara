@@ -113,62 +113,26 @@ describe('renderStepIcon', () => {
     expect(iconWrapper).toHaveClass('pf-m-md')
   })
 
-  it('uses list variant when specified (xl size)', () => {
-    const view = renderStepIcon(MockIcon, 'test-node', 'list')
+  it.each([
+    { variant: 'list', sizeClass: 'pf-m-xl' },
+    { variant: 'legend', sizeClass: 'pf-m-md' },
+    { variant: 'header', sizeClass: 'pf-m-xl' },
+  ] as const)('uses the correct size for the $variant variant', ({ variant, sizeClass }) => {
+    const view = renderStepIcon(MockIcon, 'test-node', variant)
     render(<>{view}</>)
 
-    const iconWrapper = screen.getByTestId('step-icon-wrapper')
-    expect(iconWrapper).toHaveClass('pf-m-xl')
+    expect(screen.getByTestId('step-icon-wrapper')).toHaveClass(sizeClass)
   })
 
-  it('uses legend variant when specified (md size, compact rows)', () => {
-    const view = renderStepIcon(MockIcon, 'test-node', 'legend')
+  it.each([
+    { variant: 'header', transform: 'translateY(1px)' },
+    { variant: 'canvas', transform: 'translateY(0px)' },
+    { variant: 'list', transform: 'scale(1.5)' },
+    { variant: 'legend', transform: 'scale(1.25)' },
+  ] as const)('applies the custom icon transform for the $variant variant', ({ variant, transform }) => {
+    const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION, variant)
     render(<>{view}</>)
 
-    const iconWrapper = screen.getByTestId('step-icon-wrapper')
-    expect(iconWrapper).toHaveClass('pf-m-md')
-  })
-
-  it('uses header variant when specified (xl size)', () => {
-    const view = renderStepIcon(MockIcon, 'test-node', 'header')
-    render(<>{view}</>)
-
-    const iconWrapper = screen.getByTestId('step-icon-wrapper')
-    expect(iconWrapper).toHaveClass('pf-m-xl')
-  })
-
-  it('applies different custom icon offset for header variant', () => {
-    const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION, 'header')
-    render(<>{view}</>)
-
-    const icon = screen.getByTestId('styled-icon')
-    // Header variant has customIconOffsetY: 1
-    expect(icon.style.transform).toContain('translateY(1px)')
-  })
-
-  it('applies zero offset for canvas variant custom icon', () => {
-    const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION, 'canvas')
-    render(<>{view}</>)
-
-    const icon = screen.getByTestId('styled-icon')
-    // Canvas variant has customIconOffsetY: 0
-    expect(icon.style.transform).toContain('translateY(0px)')
-  })
-
-  it('applies correct scale for list variant custom icon', () => {
-    const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION, 'list')
-    render(<>{view}</>)
-
-    const icon = screen.getByTestId('styled-icon')
-    // List variant has customIconScale: 1.5
-    expect(icon.style.transform).toContain('scale(1.5)')
-  })
-
-  it('applies legend scale for custom icon', () => {
-    const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION, 'legend')
-    render(<>{view}</>)
-
-    const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(1.25)')
+    expect(screen.getByTestId('styled-icon').style.transform).toContain(transform)
   })
 })
