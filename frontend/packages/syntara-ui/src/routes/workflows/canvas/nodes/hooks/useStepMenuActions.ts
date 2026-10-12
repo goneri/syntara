@@ -12,6 +12,7 @@ import { createElement, useCallback, type ReactNode } from 'react'
 
 import { type StepMenuCategoryUnion, StepMenuCategory } from '../../../../../constants'
 import { useAlerts } from '../../../../../providers/alerts'
+import type { NodeActionsContextValue } from '../../../../../routes/builder/NodeActionsContext'
 import { useStepActions } from '../../../../../routes/builder/StepActionsContext'
 import { getErrorMessage } from '../../../../../utils/apiErrors'
 import { detachPromise } from '../../../../../utils/detachPromise'
@@ -35,6 +36,10 @@ type UseStepMenuActionsOptions = {
   triggerIndex?: number
   disabled?: boolean
   additionalActions?: StepMenuAction[]
+}
+
+type UseCanvasMenuActionsOptions = UseStepMenuActionsOptions & {
+  stepActions: NodeActionsContextValue | null
 }
 
 type BuilderActionHandlers = {
@@ -140,10 +145,15 @@ function appendDeleteAction(actions: StepMenuAction[], deleteAction: StepMenuAct
  * })
  */
 export function useStepMenuActions(options: UseStepMenuActionsOptions): StepMenuAction[] {
+  const stepActions = useStepActions()
+  return useCanvasMenuActions({ ...options, stepActions })
+}
+
+export function useCanvasMenuActions(options: UseCanvasMenuActionsOptions): StepMenuAction[] {
   const { nodeId, stepCategory, triggerIndex, disabled = false, additionalActions = [] } = options
   const { deleteElements } = useReactFlow()
   const { showError } = useAlerts()
-  const stepActions = useStepActions()
+  const { stepActions } = options
 
   const handleDelete = useCallback(() => {
     // Use React Flow's deleteElements to trigger proper cleanup via onNodesDelete
