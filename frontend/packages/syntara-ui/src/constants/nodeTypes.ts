@@ -31,8 +31,8 @@ export const FlowNodeType = {
 export type FlowNodeTypeUnion = ValueOf<typeof FlowNodeType>
 
 /**
- * Node type categories for menu actions and workflow operations.
- * Groups FlowNodeTypes into categories for menu handling.
+ * Step categories for canvas menu actions and workflow operations.
+ * Groups FlowNodeType identifiers into categories for menu handling.
  *
  * @example
  * import { StepMenuCategory } from '@/constants/nodeTypes'
@@ -50,5 +50,11 @@ export const StepMenuCategory = {
   TRIGGER: 'trigger',
 } as const
 
-/** Union of StepMenuCategory values ('activity' | 'trigger') */
+/** Union of StepMenuCategory values ('activity' | 'control-flow' | 'trigger') */
 export type StepMenuCategoryUnion = ValueOf<typeof StepMenuCategory>
+
+/** @deprecated Use StepMenuCategory instead. */
+export const MenuNodeType = StepMenuCategory
+
+/** @deprecated Use StepMenuCategoryUnion instead. */
+export type MenuNodeTypeUnion = StepMenuCategoryUnion
