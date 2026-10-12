@@ -1,6 +1,7 @@
 import type { StepMenuCategoryUnion } from '../../../../../constants'
+import { useNodeActions } from '../../../../../routes/builder/NodeActionsContext'
 
-import { useStepMenuActions, type StepMenuAction } from './useStepMenuActions'
+import { useCanvasMenuActions, type StepMenuAction } from './useStepMenuActions'
 
 // Re-export for legacy callers while the canvas components migrate to step terminology.
 export { StepMenuCategory, type StepMenuCategoryUnion } from '../../../../../constants'
@@ -18,5 +19,6 @@ type UseNodeMenuActionsOptions = {
 /** Compatibility wrapper for callers that still use node terminology. */
 export function useNodeMenuActions(options: UseNodeMenuActionsOptions): NodeMenuAction[] {
   const { nodeType, ...stepOptions } = options
-  return useStepMenuActions({ ...stepOptions, stepCategory: nodeType })
+  const stepActions = useNodeActions()
+  return useCanvasMenuActions({ ...stepOptions, stepCategory: nodeType, stepActions })
 }
