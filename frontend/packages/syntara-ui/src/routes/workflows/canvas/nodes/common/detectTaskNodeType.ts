@@ -1,13 +1,12 @@
 import type { TaskActivity } from '@syntara/contracts'
 
 import {
-  DetectedExecutorType as StepDetectedExecutorType,
   detectTaskExecutorType,
   type TaskActivityWithMetadata as StepTaskActivityWithMetadata,
   type TaskExecutorTypeDetectionResult,
 } from './detectTaskExecutorType'
 
-export const DetectedExecutorType = StepDetectedExecutorType
+export { DetectedExecutorType } from './detectTaskExecutorType'
 export type TaskActivityWithMetadata = StepTaskActivityWithMetadata
 export type DetectedNodeTypeResult = TaskExecutorTypeDetectionResult
 
