@@ -43,9 +43,9 @@ function isAAPConnector(parsed: unknown): boolean {
   return (
     typeof parsed === 'object' &&
     parsed !== null &&
-    Object.prototype.hasOwnProperty.call(parsed, '__type') &&
+    Object.hasOwn(parsed, '__type') &&
     (parsed as Record<string, unknown>).__type === 'connector' &&
-    Object.prototype.hasOwnProperty.call(parsed, 'connectorId') &&
+    Object.hasOwn(parsed, 'connectorId') &&
     (parsed as Record<string, unknown>).connectorId === 'ansible-automation-platform'
   )
 }

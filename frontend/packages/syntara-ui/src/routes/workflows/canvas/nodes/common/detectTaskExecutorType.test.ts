@@ -147,67 +147,22 @@ describe('detectTaskExecutorType', () => {
       expect(result.connectorData).toBeNull()
     })
 
-    it('does not detect AAP when prompt is plain text', () => {
+    it.each([
+      ['plain text', 'Run a job template on AAP'],
+      [
+        'a different connector ID',
+        JSON.stringify({ __type: 'connector', connectorId: 'some-other-connector', operation: 'do_something' }),
+      ],
+      [
+        'a different connector type',
+        JSON.stringify({ __type: 'something-else', connectorId: 'ansible-automation-platform' }),
+      ],
+      ['invalid JSON', '{ invalid json'],
+    ] as const)('does not detect AAP for %s prompts', (_scenario, prompt) => {
       const task = createBaseTask({
         type: 'agentic',
         parameters: {
-          prompt: 'Run a job template on AAP',
-          model: 'claude-3-sonnet',
-        },
-      })
-
-      const result = detectTaskExecutorType(task)
-
-      expect(result.detectedExecutorType).toBe('agentic')
-      expect(result.actualExecutor).toBe('agentic')
-    })
-
-    it('does not detect AAP when connectorId is different', () => {
-      const promptPayload = {
-        __type: 'connector',
-        connectorId: 'some-other-connector',
-        operation: 'do_something',
-      }
-
-      const task = createBaseTask({
-        type: 'agentic',
-        parameters: {
-          prompt: JSON.stringify(promptPayload),
-          model: 'claude-3-sonnet',
-        },
-      })
-
-      const result = detectTaskExecutorType(task)
-
-      expect(result.detectedExecutorType).toBe('agentic')
-      expect(result.actualExecutor).toBe('agentic')
-    })
-
-    it('does not detect AAP when __type is not "connector"', () => {
-      const promptPayload = {
-        __type: 'something-else',
-        connectorId: 'ansible-automation-platform',
-      }
-
-      const task = createBaseTask({
-        type: 'agentic',
-        parameters: {
-          prompt: JSON.stringify(promptPayload),
-          model: 'claude-3-sonnet',
-        },
-      })
-
-      const result = detectTaskExecutorType(task)
-
-      expect(result.detectedExecutorType).toBe('agentic')
-      expect(result.actualExecutor).toBe('agentic')
-    })
-
-    it('handles invalid JSON in prompt gracefully', () => {
-      const task = createBaseTask({
-        type: 'agentic',
-        parameters: {
-          prompt: '{ invalid json',
+          prompt,
           model: 'claude-3-sonnet',
         },
       })

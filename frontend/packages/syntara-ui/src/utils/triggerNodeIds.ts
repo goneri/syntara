@@ -41,8 +41,7 @@ type ResolveFlowNodeIdParams = {
   nodeId: string
   triggerIndex?: number
 } & (
-  | { stepCategory: StepMenuCategoryUnion; nodeType?: never }
-  | { nodeType: StepMenuCategoryUnion; stepCategory?: never }
+  { stepCategory: StepMenuCategoryUnion; nodeType?: never } | { nodeType: StepMenuCategoryUnion; stepCategory?: never }
 )
 
 /** Accept both category property names while callers migrate to Step terminology. */
