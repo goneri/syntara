@@ -21,8 +21,8 @@ type StandardStepHeaderProps = {
 }
 
 /**
- * Standard node header component that combines icon, title, subtitle, optional expand toggle, and kebab menu.
- * Reduces boilerplate in node component implementations.
+ * Standard step header component that combines icon, title, subtitle, optional expand toggle, and kebab menu.
+ * Reduces boilerplate in step component implementations.
  *
  * The kebab menu supports:
  * - Custom actions via additionalActions prop in useStepMenuActions

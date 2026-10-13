@@ -31,7 +31,7 @@ describe('SynStepMenu', () => {
       const actions = [createMenuAction()]
       render(<SynStepMenu menuActions={actions} className="custom-menu-class" />)
 
-      const wrapper = screen.getByTestId('node-menu-wrapper')
+      const wrapper = screen.getByTestId('step-menu-wrapper')
       expect(wrapper).toHaveClass('custom-menu-class')
     })
 
@@ -39,7 +39,7 @@ describe('SynStepMenu', () => {
       const actions = [createMenuAction()]
       render(<SynStepMenu menuActions={actions} style={{ marginTop: '10px' }} />)
 
-      const wrapper = screen.getByTestId('node-menu-wrapper')
+      const wrapper = screen.getByTestId('step-menu-wrapper')
       expect(wrapper).toHaveStyle({ marginTop: '10px' })
     })
 
@@ -47,7 +47,7 @@ describe('SynStepMenu', () => {
       const actions = [createMenuAction()]
       render(<SynStepMenu menuActions={actions} />)
 
-      const wrapper = screen.getByTestId('node-menu-wrapper')
+      const wrapper = screen.getByTestId('step-menu-wrapper')
       expect(wrapper).toHaveClass('nodrag')
       expect(wrapper).toHaveClass('nopan')
     })
@@ -334,7 +334,7 @@ describe('SynStepMenu', () => {
       const actions = [createMenuAction()]
       render(<SynStepMenu menuActions={actions} />)
 
-      const wrapper = screen.getByTestId('node-menu-wrapper')
+      const wrapper = screen.getByTestId('step-menu-wrapper')
       expect(wrapper).not.toHaveAttribute('role')
       expect(wrapper).not.toHaveAttribute('tabIndex')
     })

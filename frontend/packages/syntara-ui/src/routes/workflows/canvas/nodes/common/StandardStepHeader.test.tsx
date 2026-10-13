@@ -17,27 +17,27 @@ import { StandardStepHeader } from './StandardStepHeader'
 
 describe('StandardStepHeader', () => {
   it('renders title and subtitle', () => {
-    render(<StandardStepHeader title="Test Node" subtitle="Task" />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" />)
 
-    expect(screen.getByText('Test Node')).toBeInTheDocument()
+    expect(screen.getByText('Test Step')).toBeInTheDocument()
     expect(screen.getByText('Task')).toBeInTheDocument()
   })
 
   it('renders icon when provided', () => {
     const icon = <svg data-testid="test-icon" />
-    render(<StandardStepHeader title="Test Node" subtitle="Task" icon={icon} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" icon={icon} />)
 
     expect(screen.getByTestId('test-icon')).toBeInTheDocument()
   })
 
   it('does not render menu when no menuActions provided', () => {
-    render(<StandardStepHeader title="Test Node" subtitle="Task" />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" />)
 
     expect(screen.queryByRole('button', { name: /step actions menu/i })).not.toBeInTheDocument()
   })
 
   it('does not render menu when menuActions is empty', () => {
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={[]} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={[]} />)
 
     expect(screen.queryByRole('button', { name: /step actions menu/i })).not.toBeInTheDocument()
   })
@@ -45,7 +45,7 @@ describe('StandardStepHeader', () => {
   it('renders kebab menu button when menuActions provided', () => {
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     expect(screen.getByRole('button', { name: /step actions menu/i })).toBeInTheDocument()
   })
@@ -54,7 +54,7 @@ describe('StandardStepHeader', () => {
     const user = userEvent.setup()
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
     await user.click(menuButton)
@@ -69,7 +69,7 @@ describe('StandardStepHeader', () => {
     const deleteHandler = vi.fn()
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: deleteHandler, variant: 'danger' as const }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     // Open menu
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
@@ -93,7 +93,7 @@ describe('StandardStepHeader', () => {
       { id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const },
     ]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     // Open menu
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
@@ -114,7 +114,7 @@ describe('StandardStepHeader', () => {
       { id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const },
     ]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     // Open menu
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
@@ -135,7 +135,7 @@ describe('StandardStepHeader', () => {
     const icon = <svg data-testid="action-icon" />
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: vi.fn(), icon }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     // Open menu
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
@@ -151,14 +151,14 @@ describe('StandardStepHeader', () => {
     const user = userEvent.setup()
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     // Open menu
     const menuButton = screen.getByRole('button', { name: /step actions menu/i })
     await user.click(menuButton)
 
     await waitFor(() => {
-      expect(screen.getByTestId('node-menu-item-delete')).toHaveClass('pf-m-danger')
+      expect(screen.getByTestId('step-menu-item-delete')).toHaveClass('pf-m-danger')
     })
   })
 
@@ -166,7 +166,7 @@ describe('StandardStepHeader', () => {
     mockNodesConnectable.value = false
     const menuActions = [{ id: 'delete', label: 'Delete', onClick: vi.fn(), variant: 'danger' as const }]
 
-    render(<StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />)
+    render(<StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />)
 
     expect(screen.queryByRole('button', { name: /step actions menu/i })).not.toBeInTheDocument()
     mockNodesConnectable.value = true
@@ -180,7 +180,7 @@ describe('StandardStepHeader', () => {
     render(
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <div onClick={parentClickHandler}>
-        <StandardStepHeader title="Test Node" subtitle="Task" menuActions={menuActions} />
+        <StandardStepHeader title="Test Step" subtitle="Task" menuActions={menuActions} />
       </div>
     )
 
