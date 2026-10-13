@@ -54,13 +54,13 @@ describe('useExecutionStepClick', () => {
     vi.clearAllMocks()
   })
 
-  it('returns null selectedNodeId initially', () => {
+  it('returns null selectedStepId initially', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
-    expect(result.current.selectedNodeId).toBeNull()
-    expect(result.current.selectedNodeName).toBeNull()
+    expect(result.current.selectedStepId).toBeNull()
+    expect(result.current.selectedStepName).toBeNull()
   })
 
-  it('delegates approval node clicks to useExecutionApprovals', () => {
+  it('delegates approval step clicks to useExecutionApprovals', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const approvalNode = makeNode('approval-1', 'waiting', { type: FlowNodeType.APPROVAL })
 
@@ -69,11 +69,11 @@ describe('useExecutionStepClick', () => {
     })
 
     expect(mockHandleApprovalClick).toHaveBeenCalledWith(fakeEvent, approvalNode)
-    // Should NOT set selectedNodeId for approval nodes
-    expect(result.current.selectedNodeId).toBeNull()
+    // Should NOT set selectedStepId for approval steps
+    expect(result.current.selectedStepId).toBeNull()
   })
 
-  it('selects a completed node on click', () => {
+  it('selects a completed step on click', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node = makeNode('step-1', 'completed', { name: 'Run Script' })
 
@@ -81,11 +81,11 @@ describe('useExecutionStepClick', () => {
       result.current.handleNodeClick(fakeEvent, node)
     })
 
-    expect(result.current.selectedNodeId).toBe('step-1')
-    expect(result.current.selectedNodeName).toBe('Run Script')
+    expect(result.current.selectedStepId).toBe('step-1')
+    expect(result.current.selectedStepName).toBe('Run Script')
   })
 
-  it('selects a failed node on click', () => {
+  it('selects a failed step on click', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node = makeNode('step-2', 'failed', { name: 'Deploy' })
 
@@ -93,27 +93,27 @@ describe('useExecutionStepClick', () => {
       result.current.handleNodeClick(fakeEvent, node)
     })
 
-    expect(result.current.selectedNodeId).toBe('step-2')
-    expect(result.current.selectedNodeName).toBe('Deploy')
+    expect(result.current.selectedStepId).toBe('step-2')
+    expect(result.current.selectedStepName).toBe('Deploy')
   })
 
-  it('keeps selection when clicking the same node again', () => {
+  it('keeps selection when clicking the same step again', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node = makeNode('step-1', 'completed', { name: 'Run Script' })
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, node)
     })
-    expect(result.current.selectedNodeId).toBe('step-1')
+    expect(result.current.selectedStepId).toBe('step-1')
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, node)
     })
-    expect(result.current.selectedNodeId).toBe('step-1')
-    expect(result.current.selectedNodeName).toBe('Run Script')
+    expect(result.current.selectedStepId).toBe('step-1')
+    expect(result.current.selectedStepName).toBe('Run Script')
   })
 
-  it('switches selection when clicking a different node', () => {
+  it('switches selection when clicking a different step', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node1 = makeNode('step-1', 'completed', { name: 'First' })
     const node2 = makeNode('step-2', 'completed', { name: 'Second' })
@@ -121,30 +121,30 @@ describe('useExecutionStepClick', () => {
     act(() => {
       result.current.handleNodeClick(fakeEvent, node1)
     })
-    expect(result.current.selectedNodeId).toBe('step-1')
+    expect(result.current.selectedStepId).toBe('step-1')
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, node2)
     })
-    expect(result.current.selectedNodeId).toBe('step-2')
-    expect(result.current.selectedNodeName).toBe('Second')
+    expect(result.current.selectedStepId).toBe('step-2')
+    expect(result.current.selectedStepName).toBe('Second')
   })
 
-  it('ignores clicks on pending/running nodes', () => {
+  it('ignores clicks on pending/running steps', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, makeNode('step-1', 'pending'))
     })
-    expect(result.current.selectedNodeId).toBeNull()
+    expect(result.current.selectedStepId).toBeNull()
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, makeNode('step-2', 'running'))
     })
-    expect(result.current.selectedNodeId).toBeNull()
+    expect(result.current.selectedStepId).toBeNull()
   })
 
-  it('uses node id as name when data.name is not a string', () => {
+  it('uses step id as name when data.name is not a string', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node = {
       id: 'step-no-name',
@@ -155,24 +155,24 @@ describe('useExecutionStepClick', () => {
       result.current.handleNodeClick(fakeEvent, node)
     })
 
-    expect(result.current.selectedNodeId).toBe('step-no-name')
-    expect(result.current.selectedNodeName).toBe('step-no-name')
+    expect(result.current.selectedStepId).toBe('step-no-name')
+    expect(result.current.selectedStepName).toBe('step-no-name')
   })
 
-  it('deselectNode clears selectedNodeId and selectedNodeName', () => {
+  it('deselectStep clears selectedStepId and selectedStepName', () => {
     const { result } = renderHook(() => useExecutionStepClick('exec-1'))
     const node = makeNode('step-1', 'completed', { name: 'Run Script' })
 
     act(() => {
       result.current.handleNodeClick(fakeEvent, node)
     })
-    expect(result.current.selectedNodeId).toBe('step-1')
+    expect(result.current.selectedStepId).toBe('step-1')
 
     act(() => {
-      result.current.deselectNode()
+      result.current.deselectStep()
     })
-    expect(result.current.selectedNodeId).toBeNull()
-    expect(result.current.selectedNodeName).toBeNull()
+    expect(result.current.selectedStepId).toBeNull()
+    expect(result.current.selectedStepName).toBeNull()
   })
 
   it('exposes clearApprovals from useExecutionApprovals', () => {

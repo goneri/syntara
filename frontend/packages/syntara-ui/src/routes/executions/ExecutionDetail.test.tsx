@@ -269,8 +269,8 @@ vi.mock('../../providers/alerts', () => ({
 
 // Mock useExecutionStepClick hook
 const mockHandleNodeClick = vi.fn()
-const mockSelectNode = vi.fn()
-const mockDeselectNode = vi.fn()
+const mockSelectStep = vi.fn()
+const mockDeselectStep = vi.fn()
 const mockPendingApproval = {
   id: 'approval-1',
   name: 'Test Approval',
@@ -294,10 +294,10 @@ vi.mock('./hooks/useExecutionStepClick', () => ({
     clearApprovals: mockClearPendingApproval,
     setApprovalsAndIndex: mockSetPendingApproval,
     fetchApprovals: mockFetchForStep,
-    selectedNodeId: null,
-    selectedNodeName: null,
-    selectNode: mockSelectNode,
-    deselectNode: mockDeselectNode,
+    selectedStepId: null,
+    selectedStepName: null,
+    selectStep: mockSelectStep,
+    deselectStep: mockDeselectStep,
     handleNodeClick: mockHandleNodeClick,
   })),
 }))
@@ -747,10 +747,10 @@ describe('ExecutionDetail', () => {
         clearApprovals: mockClearPendingApproval,
         setApprovalsAndIndex: mockSetPendingApproval,
         fetchApprovals: mockFetchForStep,
-        selectedNodeId: null,
-        selectedNodeName: null,
-        selectNode: mockSelectNode,
-        deselectNode: mockDeselectNode,
+        selectedStepId: null,
+        selectedStepName: null,
+        selectStep: mockSelectStep,
+        deselectStep: mockDeselectStep,
         handleNodeClick: mockHandleNodeClick,
       })
 
@@ -778,10 +778,10 @@ describe('ExecutionDetail', () => {
         clearApprovals: mockClearPendingApproval,
         setApprovalsAndIndex: mockSetPendingApproval,
         fetchApprovals: mockFetchForStep,
-        selectedNodeId: null,
-        selectedNodeName: null,
-        selectNode: mockSelectNode,
-        deselectNode: mockDeselectNode,
+        selectedStepId: null,
+        selectedStepName: null,
+        selectStep: mockSelectStep,
+        deselectStep: mockDeselectStep,
         handleNodeClick: mockHandleNodeClick,
       })
 
@@ -1216,10 +1216,10 @@ describe('ExecutionDetail', () => {
         clearApprovals: mockClearPendingApproval,
         setApprovalsAndIndex: mockSetPendingApproval,
         fetchApprovals: mockFetchForStep,
-        selectedNodeId: null,
-        selectedNodeName: null,
-        selectNode: mockSelectNode,
-        deselectNode: mockDeselectNode,
+        selectedStepId: null,
+        selectedStepName: null,
+        selectStep: mockSelectStep,
+        deselectStep: mockDeselectStep,
         handleNodeClick: mockHandleNodeClick,
       })
 
