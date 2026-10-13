@@ -161,11 +161,11 @@ function ThreePanelLayout({
         <FlexItem flex={{ default: 'flex_1' }} className={styles.stepDetailsPane}>
           {detailNodeId && displayStepName ? (
             <StepExecutionDetailsPanel
-              nodeId={detailNodeId}
-              nodeName={displayStepName}
+              stepId={detailNodeId}
+              stepName={displayStepName}
               executionId={executionId}
-              nodeState={selectedNodeState}
-              nodeType={selectedNodeType}
+              stepState={selectedNodeState}
+              stepType={selectedNodeType}
             />
           ) : (
             <NoSelectionState />
