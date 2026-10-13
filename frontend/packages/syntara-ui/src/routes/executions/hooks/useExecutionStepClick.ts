@@ -15,12 +15,12 @@ import { isWaitingApprovalNode, useExecutionApprovals } from './useExecutionAppr
  * **Layer 2: State (useExecutionApprovals)**
  * - Manages approval navigation state (current index, current approval)
  * - Handles approval list updates and index clamping
- * - Provides handlers for node clicks on waiting approval nodes
+ * - Provides handlers for node clicks on waiting approval steps
  * - Delegates to: `useFetchPendingApprovals`
  *
  * **Layer 3: Interaction (useExecutionStepClick)** ← You are here
- * - Composes approval clicks + node selection clicks
- * - Routes waiting approval nodes → approval flow
+ * - Composes approval clicks + step selection clicks
+ * - Routes waiting approval steps → approval flow
  * - Routes completed/failed nodes → details panel
  * - Delegates to: `useExecutionApprovals`
  *
@@ -32,13 +32,13 @@ import { isWaitingApprovalNode, useExecutionApprovals } from './useExecutionAppr
  *
  * **Usage in ExecutionDetail:**
  * ```tsx
- * const nodeClick = useExecutionStepClick(executionId)
- * const approval = useExecutionApprovalPanel(executionId, searchParams, nodeClick, workflowDef)
+ * const stepClick = useExecutionStepClick(executionId)
+ * const approval = useExecutionApprovalPanel(executionId, searchParams, stepClick, workflowDef)
  * ```
  *
  * **Why layered instead of one big hook?**
  * - Each layer has a single, testable responsibility
- * - `useExecutionStepClick` can be used independently for non-approval node clicks
+ * - `useExecutionStepClick` can be used independently for non-approval step clicks
  * - `useFetchPendingApprovals` is reusable in other contexts (e.g., approval list page)
  * - Easier to test in isolation (4 focused test files vs 1 massive test file)
  * - Follows React hook composition patterns (like `useState` + `useEffect` instead of one giant state hook)
@@ -72,7 +72,7 @@ function getStepActivityId(node: ExecutionNode): string {
  *
  * Routes canvas node clicks to either:
  * 1. Approval nodes in "waiting" status → delegates to useExecutionApprovals
- * 2. Completed/failed steps → toggles step details panel via selectedNodeId
+ * 2. Completed/failed steps → toggles step details panel via selectedStepId
  *
  * See file-level JSDoc for the full approval hooks architecture.
  */
@@ -89,10 +89,10 @@ export function useExecutionStepClick(executionId: string | undefined) {
     fetchApprovals,
   } = useExecutionApprovals(executionId)
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
-  const [selectedNodeName, setSelectedNodeName] = useState<string | null>(null)
-  // Ref mirrors selectedNodeId so the click callback never goes stale
-  const selectedNodeIdRef = useRef<string | null>(null)
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null)
+  const [selectedStepName, setSelectedStepName] = useState<string | null>(null)
+  // Ref mirrors selectedStepId so the click callback never goes stale
+  const selectedStepIdRef = useRef<string | null>(null)
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: ExecutionNode) => {
@@ -104,24 +104,24 @@ export function useExecutionStepClick(executionId: string | undefined) {
       const execState = getExecutionState(node)
       if (execState?.status === 'completed' || execState?.status === 'failed') {
         const activityId = getStepActivityId(node)
-        selectedNodeIdRef.current = activityId
-        setSelectedNodeId(activityId)
-        setSelectedNodeName(getStepDisplayName(node))
+        selectedStepIdRef.current = activityId
+        setSelectedStepId(activityId)
+        setSelectedStepName(getStepDisplayName(node))
       }
     },
     [handleApprovalNodeClick]
   )
 
-  const selectNode = useCallback((nodeId: string, nodeName: string) => {
-    selectedNodeIdRef.current = nodeId
-    setSelectedNodeId(nodeId)
-    setSelectedNodeName(nodeName)
+  const selectStep = useCallback((stepId: string, stepName: string) => {
+    selectedStepIdRef.current = stepId
+    setSelectedStepId(stepId)
+    setSelectedStepName(stepName)
   }, [])
 
-  const deselectNode = useCallback(() => {
-    selectedNodeIdRef.current = null
-    setSelectedNodeId(null)
-    setSelectedNodeName(null)
+  const deselectStep = useCallback(() => {
+    selectedStepIdRef.current = null
+    setSelectedStepId(null)
+    setSelectedStepName(null)
   }, [])
 
   return {
@@ -134,11 +134,11 @@ export function useExecutionStepClick(executionId: string | undefined) {
     clearApprovals,
     setApprovalsAndIndex,
     fetchApprovals,
-    // Node selection state
-    selectedNodeId,
-    selectedNodeName,
-    selectNode,
-    deselectNode,
+    // Step selection state
+    selectedStepId,
+    selectedStepName,
+    selectStep,
+    deselectStep,
     handleNodeClick,
   }
 }

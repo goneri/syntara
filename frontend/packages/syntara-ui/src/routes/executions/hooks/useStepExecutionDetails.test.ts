@@ -100,7 +100,7 @@ describe('useStepExecutionDetails', () => {
       )
     })
 
-    it('is false when nodeId is empty string', () => {
+    it('is false when stepId is empty string', () => {
       renderHook(() => useStepExecutionDetails('', 'exec-1'), { wrapper: makeWrapper(queryClient) })
 
       expect(mockUseQuery).toHaveBeenCalledWith(
@@ -111,7 +111,7 @@ describe('useStepExecutionDetails', () => {
       )
     })
 
-    it('is true when both nodeId and executionId are provided', () => {
+    it('is true when both stepId and executionId are provided', () => {
       renderHook(() => useStepExecutionDetails('my_activity', 'exec-1'), { wrapper: makeWrapper(queryClient) })
 
       expect(mockUseQuery).toHaveBeenCalledWith(

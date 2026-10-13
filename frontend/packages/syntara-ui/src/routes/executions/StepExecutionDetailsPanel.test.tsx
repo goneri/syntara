@@ -38,10 +38,10 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 )
 
 const defaultProps = {
-  nodeId: 'run_aap_vm',
-  nodeName: 'Run AAP VM',
+  stepId: 'run_aap_vm',
+  stepName: 'Run AAP VM',
   executionId: 'exec-123',
-  nodeState: {
+  stepState: {
     activityId: 'run_aap_vm',
     status: 'completed' as const,
     startedAt: '2024-01-01T10:00:00Z',
@@ -55,13 +55,13 @@ describe('StepExecutionDetailsPanel', () => {
     mockUseQuery.mockReturnValue({ data: mockActivityData, isLoading: false, error: null, refetch: vi.fn() })
   })
 
-  it('renders the node name in the header', () => {
+  it('renders the step name in the header', () => {
     render(<StepExecutionDetailsPanel {...defaultProps} />, { wrapper })
 
     expect(screen.getByRole('heading', { name: 'Run AAP VM' })).toBeInTheDocument()
   })
 
-  it('renders node status in the header', () => {
+  it('renders step status in the header', () => {
     render(<StepExecutionDetailsPanel {...defaultProps} />, { wrapper })
 
     expect(screen.getByText('Successful')).toBeInTheDocument()
@@ -205,10 +205,10 @@ describe('StepExecutionDetailsPanel', () => {
     expect(refetch).toHaveBeenCalledOnce()
   })
 
-  it('renders without elapsed time when node has not started', () => {
+  it('renders without elapsed time when step has not started', () => {
     const propsWithoutStart = {
       ...defaultProps,
-      nodeState: undefined,
+      stepState: undefined,
     }
     render(<StepExecutionDetailsPanel {...propsWithoutStart} />, { wrapper })
 
@@ -262,7 +262,7 @@ describe('StepExecutionDetailsPanel', () => {
   it('renders running status with elapsed time updating', () => {
     const propsWithRunning = {
       ...defaultProps,
-      nodeState: {
+      stepState: {
         activityId: 'run_aap_vm',
         status: 'running' as const,
         startedAt: new Date(Date.now() - 5000).toISOString(),
@@ -278,7 +278,7 @@ describe('StepExecutionDetailsPanel', () => {
   it('renders failed status with error styling on output', () => {
     const propsWithFailed = {
       ...defaultProps,
-      nodeState: {
+      stepState: {
         activityId: 'run_aap_vm',
         status: 'failed' as const,
         startedAt: '2024-01-01T10:00:00Z',
@@ -290,7 +290,7 @@ describe('StepExecutionDetailsPanel', () => {
     expect(screen.getByText('Failed')).toBeInTheDocument()
   })
 
-  it('renders timestamp range when node has both start and end times', () => {
+  it('renders timestamp range when step has both start and end times', () => {
     render(<StepExecutionDetailsPanel {...defaultProps} />, { wrapper })
 
     // Start and end render as two separate <time> elements (via PatternFly Timestamp)
@@ -302,8 +302,8 @@ describe('StepExecutionDetailsPanel', () => {
   it('renders only start timestamp when completion time is missing', () => {
     const propsWithoutCompletedAt = {
       ...defaultProps,
-      nodeState: {
-        ...defaultProps.nodeState,
+      stepState: {
+        ...defaultProps.stepState,
         completedAt: undefined,
       },
     }
@@ -460,7 +460,7 @@ describe('StepExecutionDetailsPanel', () => {
         refetch: vi.fn(),
       })
 
-      render(<StepExecutionDetailsPanel {...defaultProps} nodeType="aap_job_template" />, { wrapper })
+      render(<StepExecutionDetailsPanel {...defaultProps} stepType="aap_job_template" />, { wrapper })
 
       const link = screen.getByRole('link', { name: /View job in AAP/i })
       expect(link).toHaveAttribute('href', 'https://aap.example.com/jobs/123')
@@ -469,12 +469,12 @@ describe('StepExecutionDetailsPanel', () => {
     })
 
     it('does not show AAP link for non-AAP step types', () => {
-      render(<StepExecutionDetailsPanel {...defaultProps} nodeType="script" />, { wrapper })
+      render(<StepExecutionDetailsPanel {...defaultProps} stepType="script" />, { wrapper })
 
       expect(screen.queryByRole('link', { name: /View job in AAP/i })).not.toBeInTheDocument()
     })
 
-    it('does not show AAP link when nodeType is undefined', () => {
+    it('does not show AAP link when stepType is undefined', () => {
       render(<StepExecutionDetailsPanel {...defaultProps} />, { wrapper })
 
       expect(screen.queryByRole('link', { name: /View job in AAP/i })).not.toBeInTheDocument()
@@ -497,18 +497,18 @@ describe('StepExecutionDetailsPanel', () => {
         refetch: vi.fn(),
       })
 
-      render(<StepExecutionDetailsPanel {...defaultProps} nodeType="aap_job_template" />, { wrapper })
+      render(<StepExecutionDetailsPanel {...defaultProps} stepType="aap_job_template" />, { wrapper })
 
       expect(screen.queryByRole('link', { name: /View job in AAP/i })).not.toBeInTheDocument()
     })
   })
 
-  describe('agentic node', () => {
+  describe('agentic step', () => {
     const agenticProps = {
       ...defaultProps,
-      nodeId: 'triage_agent',
-      nodeName: 'AI Agent',
-      nodeType: 'agentic',
+      stepId: 'triage_agent',
+      stepName: 'AI Agent',
+      stepType: 'agentic',
     }
 
     const mockAgenticActivityData = {
@@ -570,7 +570,7 @@ describe('StepExecutionDetailsPanel', () => {
       expect(screen.getByRole('tab', { name: /Agent steps/i })).toBeInTheDocument()
     })
 
-    it('does not render tab bar for non-agentic nodes', () => {
+    it('does not render tab bar for non-agentic steps', () => {
       mockUseQuery.mockReturnValue({
         data: mockActivityData,
         isLoading: false,
@@ -578,7 +578,7 @@ describe('StepExecutionDetailsPanel', () => {
         refetch: vi.fn(),
       })
 
-      render(<StepExecutionDetailsPanel {...defaultProps} nodeType="script" />, { wrapper })
+      render(<StepExecutionDetailsPanel {...defaultProps} stepType="script" />, { wrapper })
 
       expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     })

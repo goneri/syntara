@@ -42,10 +42,10 @@ export type WorkflowDefinitionLike = {
 export function useExecutionApprovalPanel(
   executionId: string | undefined,
   searchParams: string,
-  nodeClick: StepClickResult,
+  stepClick: StepClickResult,
   workflowDefinition: WorkflowDefinitionLike | undefined
 ) {
-  const { clearApprovals, setApprovalsAndIndex, fetchApprovals, currentApproval, approvals } = nodeClick
+  const { clearApprovals, setApprovalsAndIndex, fetchApprovals, currentApproval, approvals } = stepClick
   const [panelOpen, setPanelOpen] = useState(false)
   const prevApprovalsLengthRef = useRef(0)
   const { showError } = useAlerts()

@@ -15,7 +15,7 @@ type StepExecutionDetails = {
 }
 
 /**
- * Fetches execution details (input/output data) for a specific activity node.
+ * Fetches execution details (input/output data) for a specific workflow step.
  *
  * Uses the `activity_name` query parameter for server-side filtering,
  * so only the matching activity is returned from the API.
@@ -24,7 +24,7 @@ type StepExecutionDetails = {
  * refetches so the Parameters/Output panes stay current.
  */
 export function useStepExecutionDetails(
-  nodeId: string,
+  stepId: string,
   executionId: string | null | undefined,
   activityStatus?: ActivityStatus
 ): StepExecutionDetails {
@@ -34,10 +34,10 @@ export function useStepExecutionDetails(
     {
       params: {
         path: { execution_id: executionId ?? '' },
-        query: { activity_name: nodeId, limit: 1 },
+        query: { activity_name: stepId, limit: 1 },
       },
     },
-    { enabled: !!executionId && !!nodeId }
+    { enabled: !!executionId && !!stepId }
   )
 
   const { data, isLoading, error, refetch } = queryResult
