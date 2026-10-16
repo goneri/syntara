@@ -166,8 +166,8 @@ export const credentialTypes: CredentialTypeRead[] = [
   },
   {
     id: 'ctype-kafka',
-    name: 'Kafka-connection',
-    description: 'Username and password for a Kafka connection',
+    name: 'Kafka',
+    description: 'SASL username and password for connector validation and listener runtime',
     inputs: typeInputs(
       [
         {
@@ -175,7 +175,7 @@ export const credentialTypes: CredentialTypeRead[] = [
           type: 'string',
           label: 'Username',
           secret: false,
-          help_text: 'Kafka SASL username.',
+          help_text: 'SASL username used for connector validation and listener runtime.',
         },
         {
           id: 'password',

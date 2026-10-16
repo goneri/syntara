@@ -47,7 +47,7 @@ Credential types define the field schema and injector templates for credentials.
 
 | Type | Fields | Auth Type | Purpose |
 |------|--------|-----------|---------|
-| Kafka-connection | username, password(secret) | kafka_connection | Username and password for a Kafka connection |
+| Kafka | username, password(secret) | kafka_connection | SASL username and password for connector validation and listener runtime |
 | HTTP Bearer Token | token(secret) | bearer | Bearer token API authentication |
 | HTTP Basic Auth | username, password(secret) | basic | Username/password API authentication |
 | Ansible Automation Platform | username, password(secret), oauth_token(secret) | aap | AAP Controller connectivity |

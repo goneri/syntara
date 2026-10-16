@@ -31,8 +31,8 @@ _UPSERT_UPDATE_FIELDS = (
 
 GA_CREDENTIAL_TYPES: list[dict[str, Any]] = [
     {
-        "name": "Kafka-connection",
-        "description": "Username and password for a Kafka connection",
+        "name": "Kafka",
+        "description": "SASL username and password for connector validation and listener runtime",
         "inputs": {
             "fields": [
                 {
@@ -40,7 +40,7 @@ GA_CREDENTIAL_TYPES: list[dict[str, Any]] = [
                     "label": "Username",
                     "type": "string",
                     "secret": False,
-                    "help_text": "Kafka SASL username.",
+                    "help_text": "SASL username used for connector validation and listener runtime.",
                     "placeholder": "Enter username",
                 },
                 {
