@@ -40,6 +40,10 @@ _MS_PER_SECOND = 1000
 _BOOTSTRAP_LOCK = asyncio.Lock()
 
 
+class KafkaAuthenticationConfigurationError(ValueError):
+    """Kafka connection options require usable normalized SASL credentials."""
+
+
 class KafkaAdapter:
     """Adapter for Kafka integrations implementing validate() and discover().
 
@@ -87,8 +91,17 @@ class KafkaAdapter:
         return context
 
     def connection_options(self, resolved_credential: dict[str, Any], timeout_seconds: int) -> dict[str, Any]:
-        """Build shared connection/TLS options for management and runtime tests."""
-        username, password = resolve_kafka_authentication(resolved_credential)
+        """Validate credentials and build shared management/runtime options.
+
+        Raises KafkaAuthenticationConfigurationError before constructing TLS or
+        network resources when either normalized SASL credential is empty.
+        Password whitespace remains part of the stored credential.
+        """
+        login = _sasl_login(resolved_credential)
+        if login is None:
+            msg = "Authentication configuration is incomplete"
+            raise KafkaAuthenticationConfigurationError(msg)
+        username, password = login
         return {
             "client_id": _CLIENT_ID,
             "security_protocol": "SASL_SSL",
@@ -114,8 +127,9 @@ class KafkaAdapter:
                 per-attempt budget.
 
         """
-        login = _sasl_login(resolved_credential)
-        if login is None:
+        try:
+            options = self.connection_options(resolved_credential, timeout_seconds)
+        except KafkaAuthenticationConfigurationError:
             logger.warning("Kafka validate: no usable credentials configured")
             return ValidateResult(
                 success=False,
@@ -136,7 +150,7 @@ class KafkaAdapter:
 
         client = AIOKafkaClient(
             bootstrap_servers=list(self._config.bootstrap_servers),
-            **self.connection_options(resolved_credential, timeout_seconds),
+            **options,
         )
 
         success = True
