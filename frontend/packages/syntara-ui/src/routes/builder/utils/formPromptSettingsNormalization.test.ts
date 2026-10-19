@@ -105,11 +105,13 @@ describe('formPromptSettingsNormalization', () => {
         message: 'Hi',
         unknown_key: 'drop-me',
         prompt: 'approval leak',
+        timezone: 'America/New_York',
       },
     })
     expect(result.parameters).toMatchObject({ form_definition: formDefinition, message: 'Hi' })
     expect(result.parameters).not.toHaveProperty('unknown_key')
     expect(result.parameters).not.toHaveProperty('prompt')
+    expect(result.parameters).not.toHaveProperty('timezone')
   })
 
   it('normalizes form_definition when fields are present', () => {

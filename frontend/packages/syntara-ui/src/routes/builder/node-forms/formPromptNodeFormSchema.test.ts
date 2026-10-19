@@ -33,6 +33,19 @@ describe('formPromptFormSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('strips the legacy node-level timezone parameter', () => {
+    const result = formPromptFormSchema.safeParse({
+      name: 'Survey',
+      form_definition: createEmptyFormDefinition(),
+      timezone: 'America/New_York',
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).not.toHaveProperty('timezone')
+    }
+  })
+
   it('parses stored parameters with fallback_behavior', () => {
     const result = formPromptStoredParametersSchema.safeParse({
       fallback_behavior: 'fail',

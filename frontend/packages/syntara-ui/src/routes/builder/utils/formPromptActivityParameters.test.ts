@@ -18,6 +18,15 @@ describe('buildFormPromptActivityParameters', () => {
     ).toEqual({ form_definition })
   })
 
+  it('does not serialize the legacy node-level timezone parameter', () => {
+    const form_definition = createEmptyFormDefinition()
+    const storedInput = { form_definition, timezone: 'America/New_York' }
+
+    const parameters = buildFormPromptActivityParameters(storedInput)
+
+    expect(parameters).not.toHaveProperty('timezone')
+  })
+
   it('includes populated optional fields', () => {
     const form_definition = createEmptyFormDefinition()
     expect(

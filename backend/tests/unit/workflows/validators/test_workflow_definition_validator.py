@@ -12,8 +12,6 @@ from syntara.workflows.models.validation_finding import (
 from syntara.workflows.validators.workflow_definition import (
     WorkflowValidator,
     _best_branch_messages,
-    _declared_type_for_element_id,
-    _is_misleading_schema_message,
 )
 
 
@@ -518,22 +516,47 @@ class TestCollectFindings:
         assert "'language' is a required property" in messages
         assert "'code' is a required property" in messages
 
-    def test_form_prompt_missing_parameters_does_not_surface_agentic_prompt_errors(
-        self, validator: WorkflowValidator
-    ) -> None:
-        """form_prompt nodes must not get misleading agentic oneOf errors when parameters are absent."""
+    def test_form_prompt_rejects_cross_type_parameter_keys(self, validator: WorkflowValidator) -> None:
+        """form_prompt parameters reject agentic-only keys and retain the missing form definition finding."""
         definition: dict[str, Any] = {
             "schema_version": "2.0.0",
             "name": "test",
             "triggers": [{"id": "t1", "type": "manual_trigger", "parameters": {}}],
-            "nodes": [{"id": "form1", "type": "form_prompt", "name": "Form"}],
+            "nodes": [
+                {
+                    "id": "form1",
+                    "type": "form_prompt",
+                    "name": "Form",
+                    "parameters": {"prompt": "Do something", "model": "gpt-4"},
+                }
+            ],
             "edges": [{"from": "t1", "to": "form1"}],
         }
         result = validator.collect_findings(definition)
-        messages = [f.message for f in result.findings if f.node_id == "form1"]
-        assert "'form_definition' is a required property" in messages
-        assert not any("agentic" in m for m in messages)
-        assert "'prompt' is a required property" not in messages
+        node_findings = [finding for finding in result.findings if finding.node_id == "form1"]
+        messages = [finding.message for finding in node_findings]
+        assert any(
+            finding.message == "Field required" and finding.field_path == "parameters.form_definition"
+            for finding in node_findings
+        )
+        assert "Additional properties are not allowed ('model', 'prompt' were unexpected)" in messages
+
+    def test_agentic_node_without_prompt_reports_missing_prompt(self, validator: WorkflowValidator) -> None:
+        """A missing required prompt remains visible for a node declared as agentic."""
+        definition: dict[str, Any] = {
+            "schema_version": "2.0.0",
+            "name": "test",
+            "triggers": [{"id": "t1", "type": "manual_trigger", "parameters": {}}],
+            "nodes": [{"id": "agent1", "type": "agentic", "parameters": {}}],
+            "edges": [{"from": "t1", "to": "agent1"}],
+        }
+
+        result = validator.collect_findings(definition)
+
+        assert any(
+            finding.node_id == "agent1" and finding.message == "'prompt' is a required property"
+            for finding in result.findings
+        )
 
     def test_unknown_node_type_surfaces_type_discriminator_messages(self, validator: WorkflowValidator) -> None:
         """Invalid node types must not lose all type-const hints to the misleading-message filter."""
@@ -1204,26 +1227,6 @@ class TestScheduledTriggerConfigFindings:
         assert len(scheduled) == 2
         assert {f.node_id for f in scheduled} == {"sched_a", "sched_b"}
         assert all(f.field_path == "parameters.timezone" for f in scheduled)
-
-
-class TestMisleadingSchemaMessageFilter:
-    """Unit tests for oneOf supplementary message filtering."""
-
-    def test_filters_agentic_prompt_on_form_prompt(self) -> None:
-        assert _is_misleading_schema_message("'prompt' is a required property", "form_prompt") is True
-        assert _is_misleading_schema_message("'agentic' was expected", "form_prompt") is True
-
-    def test_does_not_filter_type_const_for_unknown_authored_type(self) -> None:
-        assert _is_misleading_schema_message("'script' was expected", "not_a_real_executor") is False
-
-    def test_declared_type_resolves_triggers_and_nodes(self) -> None:
-        definition: dict[str, Any] = {
-            "triggers": [{"id": "t1", "type": "manual_trigger"}],
-            "nodes": [{"id": "n1", "type": "script"}],
-        }
-        assert _declared_type_for_element_id(definition, "t1") == "manual_trigger"
-        assert _declared_type_for_element_id(definition, "n1") == "script"
-        assert _declared_type_for_element_id(definition, "missing") is None
 
 
 class TestBestBranchMessages:
