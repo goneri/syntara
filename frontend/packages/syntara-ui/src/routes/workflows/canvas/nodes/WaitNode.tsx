@@ -23,7 +23,9 @@ export type WaitNode = { type: 'wait' } & Node<WaitActivity>
 
 export function WaitNodeComponent(props: NodeProps<WaitNode>) {
   const metadata = nodeMetadata.wait
-  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_WAIT, 'canvas', getNodeTypeColor('wait'))
+  const iconColor = getNodeTypeColor('wait')
+  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_WAIT, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_WAIT, 'semanticZoom', iconColor)
   const menuActions = useNodeMenuActions({
     nodeId: props.data.id,
     nodeType: MenuNodeType.CONTROL_FLOW,
@@ -63,6 +65,8 @@ export function WaitNodeComponent(props: NodeProps<WaitNode>) {
         title: semanticZoomActivityTitle(props.data.name, `Untitled ${metadata.label}`),
         typeLabel: metadata.label,
       }}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <StandardNodeHeader
         icon={iconNode}

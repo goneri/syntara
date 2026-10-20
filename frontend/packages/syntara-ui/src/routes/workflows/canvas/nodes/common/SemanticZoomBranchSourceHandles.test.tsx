@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../semanticZoom'
+
 import { SemanticZoomBranchSourceHandles } from './SemanticZoomBranchSourceHandles'
 
 vi.mock('@xyflow/react', () => ({
@@ -20,7 +22,7 @@ vi.mock('@xyflow/react', () => ({
 
 describe('SemanticZoomBranchSourceHandles', () => {
   it('renders no output when handles is empty', () => {
-    render(<SemanticZoomBranchSourceHandles handles={[]} />)
+    render(<SemanticZoomBranchSourceHandles handles={[]} tileHeightPx={SEMANTIC_ZOOM_TILE_SIZE_PX} />)
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
@@ -31,6 +33,7 @@ describe('SemanticZoomBranchSourceHandles', () => {
           { id: 'true', ariaLabel: 'True branch output' },
           { id: 'false', ariaLabel: 'False branch output' },
         ]}
+        tileHeightPx={SEMANTIC_ZOOM_TILE_SIZE_PX}
       />
     )
 
@@ -47,6 +50,7 @@ describe('SemanticZoomBranchSourceHandles', () => {
           { id: 'true', ariaLabel: 'True branch output' },
           { id: 'false', ariaLabel: 'False branch output' },
         ]}
+        tileHeightPx={SEMANTIC_ZOOM_TILE_SIZE_PX}
       />
     )
 

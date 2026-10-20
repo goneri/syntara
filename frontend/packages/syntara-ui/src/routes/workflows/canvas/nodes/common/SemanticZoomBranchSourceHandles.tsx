@@ -9,10 +9,14 @@ export type { SemanticZoomBranchSource } from '../../semanticZoomTypes'
 
 /**
  * Source handles for branching nodes at semantic zoom: no labels, stacked on the
- * right edge of the compact bar so edges fan out (matches topology-style LOD).
+ * right edge of the icon tile so edges fan out (matches topology-style LOD).
  */
-export function SemanticZoomBranchSourceHandles(props: { handles: readonly SemanticZoomBranchSource[] }) {
-  const { handles } = props
+export function SemanticZoomBranchSourceHandles(props: {
+  handles: readonly SemanticZoomBranchSource[]
+  /** Height of the tile region handles are anchored to. */
+  tileHeightPx: number
+}) {
+  const { handles, tileHeightPx } = props
   const n = handles.length
   if (n === 0) return null
 
@@ -23,7 +27,7 @@ export function SemanticZoomBranchSourceHandles(props: { handles: readonly Seman
         const anchorStyle: CSSProperties = {
           position: 'absolute',
           right: 0,
-          top: `${topPercent}%`,
+          top: `${(topPercent * tileHeightPx) / 100}px`,
           transform: 'translate(50%, -50%)',
           width: 1,
           height: 1,

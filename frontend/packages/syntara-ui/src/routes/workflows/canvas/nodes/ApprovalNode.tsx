@@ -26,7 +26,9 @@ export function ApprovalNodeComponent(props: NodeProps<ApprovalNode>) {
     disabled: props.data.settings?.disabled ?? false,
   })
 
-  const iconNode = renderNodeIcon(metadata.icon, 'approval', 'canvas', getNodeTypeColor(ActivityTypeEnum.APPROVAL))
+  const iconColor = getNodeTypeColor(ActivityTypeEnum.APPROVAL)
+  const iconNode = renderNodeIcon(metadata.icon, 'approval', 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, 'approval', 'semanticZoom', iconColor)
   const taskExecutor = metadata.label
 
   // Extract execution state if present
@@ -64,6 +66,8 @@ export function ApprovalNodeComponent(props: NodeProps<ApprovalNode>) {
         { id: 'approved', ariaLabel: 'Approved branch output' },
         { id: 'rejected', ariaLabel: 'Rejected branch output' },
       ]}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <>
         <StandardNodeHeader

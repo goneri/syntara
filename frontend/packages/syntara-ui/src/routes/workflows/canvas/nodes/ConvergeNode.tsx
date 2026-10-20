@@ -25,12 +25,9 @@ export type ConvergeNode = { type: 'converge' } & Node<ConvergeActivity>
 
 export function ConvergeNodeComponent(props: NodeProps<ConvergeNode>) {
   const metadata = nodeMetadata.converge
-  const iconNode = renderNodeIcon(
-    metadata.icon,
-    RegistryNodeId.LOGIC_CONVERGE,
-    'canvas',
-    getNodeTypeColor(ActivityTypeEnum.CONVERGE)
-  )
+  const iconColor = getNodeTypeColor(ActivityTypeEnum.CONVERGE)
+  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_CONVERGE, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_CONVERGE, 'semanticZoom', iconColor)
   const menuActions = useNodeMenuActions({
     nodeId: props.data.id,
     nodeType: MenuNodeType.CONTROL_FLOW,
@@ -59,6 +56,8 @@ export function ConvergeNodeComponent(props: NodeProps<ConvergeNode>) {
         title: semanticZoomActivityTitle(props.data.name, `Untitled ${metadata.label}`),
         typeLabel: metadata.label,
       }}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <StandardNodeHeader
         icon={iconNode}

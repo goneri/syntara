@@ -4,8 +4,10 @@ import { ExecutorTypeEnum } from '@syntara/contracts'
 import { ReactFlow, type Node, type NodeProps } from '@xyflow/react'
 import { userEvent } from 'storybook/test'
 
-import { FlowNodeType } from '../../constants'
+import { FlowNodeType, RegistryNodeId } from '../../constants'
 import { StandardNodeHeader } from '../../routes/workflows/canvas/nodes/common/StandardNodeHeader'
+import { nodeMetadata } from '../../routes/workflows/canvas/nodes/nodeMetadata'
+import { renderNodeIcon } from '../../routes/workflows/canvas/nodes/renderNodeIcon'
 import { NODE_TYPE_COLORS } from '../../routes/workflows/canvas/nodeTypeColors'
 
 import { SynStep } from './SynStep'
@@ -32,11 +34,20 @@ type NodeStoryParameters = {
 type SemanticZoomFlowNode = Node<StoryNodeData, 'semanticZoom'>
 
 function SemanticZoomNode(props: NodeProps<SemanticZoomFlowNode>) {
+  const iconColor = NODE_TYPE_COLORS.logic
+  const semanticZoomIcon = renderNodeIcon(
+    nodeMetadata.condition.icon,
+    RegistryNodeId.LOGIC_CONDITION,
+    'semanticZoom',
+    iconColor
+  )
   return (
     <SynStep
       nodeProps={props}
       topBarColor={NODE_TYPE_COLORS.logic}
       semanticZoomSummary={{ title: props.data.name, typeLabel: 'Condition' }}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={MENU_ACTIONS}
       semanticZoomBranchSources={[
         { id: 'true', ariaLabel: 'True branch' },
         { id: 'false', ariaLabel: 'False branch' },

@@ -60,23 +60,27 @@ describe('SynStep semantic zoom', () => {
     )
 
     expect(screen.getByText('Detailed body')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'T, Task Agent' })).not.toBeInTheDocument()
+    expect(screen.queryByText('T')).not.toBeInTheDocument()
   })
 
-  it('renders semantic color block when zoom is at threshold', () => {
+  it('renders icon-only semantic zoom tile when zoom is at threshold', () => {
     viewportState.zoom = 0.5
     renderWithFlow(
       <SynStep
         nodeProps={baseNodeProps}
         topBarColor="var(--pf-t--global--color--nonstatus--blue--200)"
         semanticZoomSummary={{ title: 'Analyze', typeLabel: 'Task Agent' }}
+        semanticZoomIcon={<span data-testid="semantic-zoom-icon" />}
       >
         <span>Detailed body</span>
       </SynStep>
     )
 
     expect(screen.queryByText('Detailed body')).not.toBeInTheDocument()
+    expect(screen.queryByText('Analyze')).not.toBeInTheDocument()
+    expect(screen.queryByText('Task Agent')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Analyze, Task Agent' })).toBeInTheDocument()
+    expect(screen.getByTestId('semantic-zoom-icon')).toBeInTheDocument()
   })
 
   it('semantic zoom layout has no accessibility violations', async () => {

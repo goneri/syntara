@@ -47,7 +47,9 @@ export function TriggerNodeComponent(props: NodeProps<TriggerNode>) {
     metadata = nodeMetadata.edaTrigger
     iconId = 'trigger-eda'
   }
-  const iconNode = renderNodeIcon(metadata.icon, iconId)
+  const iconColor = getNodeTypeColor(FlowNodeType.TRIGGER)
+  const iconNode = renderNodeIcon(metadata.icon, iconId, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, iconId, 'semanticZoom', iconColor)
   // 75px border-radius is a layout constraint (pill shape), not a spacing value — no semantic token applies
   const triggerStyle: CSSProperties = {
     borderTopLeftRadius: '75px',
@@ -101,6 +103,8 @@ export function TriggerNodeComponent(props: NodeProps<TriggerNode>) {
         title: semanticZoomActivityTitle(triggerName, `Untitled ${metadata.label}`),
         typeLabel: triggerTypeLabel,
       }}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <TriggerNodeDetails
         node={props.data}

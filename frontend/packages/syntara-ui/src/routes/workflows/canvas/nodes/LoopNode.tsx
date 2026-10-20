@@ -19,7 +19,9 @@ export type LoopNode = { type: 'loop' } & Node<LoopActivity>
 
 export function LoopNodeComponent(props: NodeProps<LoopNode>) {
   const metadata = nodeMetadata.loop
-  const iconNode = renderNodeIcon(metadata.icon, 'logic-loop', 'canvas', getNodeTypeColor('loop'))
+  const iconColor = getNodeTypeColor('loop')
+  const iconNode = renderNodeIcon(metadata.icon, 'logic-loop', 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, 'logic-loop', 'semanticZoom', iconColor)
   const menuActions = useNodeMenuActions({
     nodeId: props.data.id,
     nodeType: MenuNodeType.CONTROL_FLOW,
@@ -54,6 +56,8 @@ export function LoopNodeComponent(props: NodeProps<LoopNode>) {
         { id: 'done', ariaLabel: 'Done branch output' },
         { id: 'loop', ariaLabel: 'Loop branch output' },
       ]}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <StandardNodeHeader
         icon={iconNode}

@@ -6,7 +6,9 @@ import { FlowNodeType } from '../../../../constants'
 import type { ActivityStatus } from '../../execution/types'
 import { getNodeTypeColor } from '../nodeTypeColors'
 
+import { MenuNodeType, useNodeMenuActions } from './hooks/useNodeMenuActions'
 import { nodeMetadata } from './nodeMetadata'
+import { getTaskCanvasIcon } from './taskCanvasIcon'
 import { TaskActivityDetails } from './TaskNode'
 import { getTaskSemanticLabels } from './taskSemanticLabels'
 
@@ -24,6 +26,12 @@ export type TaskReversedNode = { type: typeof FlowNodeType.TASK_REVERSED } & Nod
 
 export function TaskReversedNodeComponent(props: NodeProps<TaskReversedNode>) {
   const metadata = nodeMetadata.task
+  const menuActions = useNodeMenuActions({
+    nodeId: props.data.id,
+    nodeType: MenuNodeType.ACTIVITY,
+    disabled: props.data.settings?.disabled ?? false,
+  })
+  const iconColor = getNodeTypeColor(FlowNodeType.TASK_REVERSED, props.data)
 
   // Extract execution state if present
   const executionState = (props.data as Record<string, unknown>).__executionState as
@@ -42,10 +50,12 @@ export function TaskReversedNodeComponent(props: NodeProps<TaskReversedNode>) {
       nodeProps={props}
       reverseHandles
       executionState={executionState}
-      topBarColor={getNodeTypeColor(FlowNodeType.TASK_REVERSED, props.data)}
+      topBarColor={iconColor}
       semanticZoomSummary={getTaskSemanticLabels(props.data)}
+      semanticZoomIcon={getTaskCanvasIcon(props.data, iconColor, 'semanticZoom')}
+      semanticZoomMenuActions={menuActions}
     >
-      <TaskActivityDetails data={props.data} iconColor={getNodeTypeColor(FlowNodeType.TASK_REVERSED, props.data)} />
+      <TaskActivityDetails data={props.data} menuActions={menuActions} iconColor={iconColor} />
     </SynStep>
   )
 }

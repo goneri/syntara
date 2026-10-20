@@ -53,7 +53,9 @@ export type SwitchNode = { type: 'switch' } & Node<SwitchActivity>
 
 export function SwitchNodeComponent(props: NodeProps<SwitchNode>) {
   const metadata = nodeMetadata.switch
-  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_SWITCH, 'canvas', getNodeTypeColor('switch'))
+  const iconColor = getNodeTypeColor('switch')
+  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_SWITCH, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_SWITCH, 'semanticZoom', iconColor)
   const menuActions = useNodeMenuActions({
     nodeId: props.data.id,
     nodeType: MenuNodeType.CONTROL_FLOW,
@@ -92,6 +94,8 @@ export function SwitchNodeComponent(props: NodeProps<SwitchNode>) {
         typeLabel: metadata.label,
       }}
       semanticZoomBranchSources={branchSources}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <SwitchNodeDetails switchActivity={props.data} icon={iconNode} menuActions={menuActions}>
         <BranchHandles>

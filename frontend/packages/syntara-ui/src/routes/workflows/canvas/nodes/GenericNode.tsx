@@ -27,6 +27,9 @@ export function GenericNodeComponent(props: NodeProps<GenericNode>) {
   const displayMessage = (typeof customMessage === 'string' ? customMessage : undefined) ?? 'Select a node type'
 
   const showTitle = !customMessage
+  const iconColor = getNodeTypeColor(FlowNodeType.GENERIC)
+  const iconNode = renderNodeIcon(RhUiSettingsIcon, FlowNodeType.GENERIC, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(RhUiSettingsIcon, FlowNodeType.GENERIC, 'semanticZoom', iconColor)
 
   const reverseHandles = typeof metadata?.__reverseHandles === 'boolean' ? metadata.__reverseHandles : undefined
 
@@ -54,12 +57,9 @@ export function GenericNodeComponent(props: NodeProps<GenericNode>) {
         title: semanticZoomActivityTitle(props.data.name, displayMessage),
         typeLabel: 'Generic',
       }}
+      semanticZoomIcon={semanticZoomIcon}
     >
-      <StandardNodeHeader
-        icon={renderNodeIcon(RhUiSettingsIcon, FlowNodeType.GENERIC, 'canvas', getNodeTypeColor(FlowNodeType.GENERIC))}
-        title={showTitle ? 'Click to configure' : undefined}
-        expandable={false}
-      />
+      <StandardNodeHeader icon={iconNode} title={showTitle ? 'Click to configure' : undefined} expandable={false} />
       <SynStepBody>
         <Flex alignItems={{ default: 'alignItemsCenter' }} justifyContent={{ default: 'justifyContentCenter' }}>
           <FlexItem>

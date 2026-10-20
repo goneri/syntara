@@ -21,12 +21,9 @@ export type ConditionNode = { type: 'condition' } & Node<ConditionActivity>
 
 export function ConditionNodeComponent(props: NodeProps<ConditionNode>) {
   const metadata = nodeMetadata.condition
-  const iconNode = renderNodeIcon(
-    metadata.icon,
-    RegistryNodeId.LOGIC_CONDITION,
-    'canvas',
-    getNodeTypeColor('condition')
-  )
+  const iconColor = getNodeTypeColor('condition')
+  const iconNode = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_CONDITION, 'canvas', iconColor)
+  const semanticZoomIcon = renderNodeIcon(metadata.icon, RegistryNodeId.LOGIC_CONDITION, 'semanticZoom', iconColor)
   const menuActions = useNodeMenuActions({
     nodeId: props.data.id,
     nodeType: MenuNodeType.CONTROL_FLOW,
@@ -59,6 +56,8 @@ export function ConditionNodeComponent(props: NodeProps<ConditionNode>) {
         { id: 'true', ariaLabel: 'True branch output' },
         { id: 'false', ariaLabel: 'False branch output' },
       ]}
+      semanticZoomIcon={semanticZoomIcon}
+      semanticZoomMenuActions={menuActions}
     >
       <ConditionNodeDetails conditionActivity={props.data} icon={iconNode} menuActions={menuActions}>
         <BranchHandles>

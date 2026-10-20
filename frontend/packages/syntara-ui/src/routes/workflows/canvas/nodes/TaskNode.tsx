@@ -15,6 +15,7 @@ import { useCredentialName } from './hooks/useCredentialName'
 import { MenuNodeType, useNodeMenuActions } from './hooks/useNodeMenuActions'
 import { getTaskIconDescriptor } from './nodeIconResolver'
 import { nodeMetadata, executorMetadata } from './nodeMetadata'
+import { getTaskCanvasIcon } from './taskCanvasIcon'
 import { renderNodeIcon } from './renderNodeIcon'
 import { getTaskSemanticLabels } from './taskSemanticLabels'
 
@@ -81,14 +82,18 @@ export function TaskNodeComponent(props: NodeProps<TaskNode>) {
   const showExecutionBadge =
     (props.data as { metadata?: { __showExecutionBadge?: boolean } }).metadata?.__showExecutionBadge === true
 
+  const iconColor = getNodeTypeColor(FlowNodeType.TASK, props.data)
+
   return (
     <SynStep
       className={metadata.className}
       nodeProps={props}
       executionState={executionState}
       showExecutionBadge={showExecutionBadge}
-      topBarColor={getNodeTypeColor(FlowNodeType.TASK, props.data)}
+      topBarColor={iconColor}
       semanticZoomSummary={getTaskSemanticLabels(props.data)}
+      semanticZoomIcon={getTaskCanvasIcon(props.data, iconColor, 'semanticZoom')}
+      semanticZoomMenuActions={menuActions}
     >
       <TaskActivityDetails
         data={props.data}
