@@ -15,8 +15,8 @@ import { SynPanel } from '../layout/SynPanel'
 import { SynStepConnectionHandles } from './SynStepConnectionHandles'
 import { SynStepExpandedAllContext } from './SynStepExpandedAllContext'
 import { SynStepExpandedContext } from './SynStepExpandedContext'
-import { SynStepSemanticZoomBody } from './SynStepSemanticZoomBody'
 import { getSynStepNodeWidth } from './synStepNodeWidth'
+import { SynStepSemanticZoomBody } from './SynStepSemanticZoomBody'
 
 type ExecutionState = {
   status: ActivityStatus

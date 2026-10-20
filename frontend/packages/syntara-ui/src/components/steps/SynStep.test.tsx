@@ -15,9 +15,8 @@ vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xyflow/react')>()
   return {
     ...actual,
-    useStore: (
-      selector: (s: { transform: [number, number, number]; nodesConnectable: boolean }) => unknown
-    ) => selector({ transform: [0, 0, viewportState.zoom], nodesConnectable: true }),
+    useStore: (selector: (s: { transform: [number, number, number]; nodesConnectable: boolean }) => unknown) =>
+      selector({ transform: [0, 0, viewportState.zoom], nodesConnectable: true }),
     useUpdateNodeInternals: () => vi.fn(),
   }
 })
