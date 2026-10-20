@@ -43,7 +43,7 @@ async def _seed_activity(
         trigger_type="manual_trigger",
         trigger_id="trigger_1",
         status=ExecutionStatus.RUNNING,
-        actor_id=user.id,
+        created_by=user.id,
     )
     session.add(execution)
     await session.flush()

@@ -20,10 +20,10 @@ from syntara.core.models.base import UserOwnedResource
 from syntara.core.models.pagination import ResourcesResponse
 from syntara.core.models.user_reference import UserReference, UserReferenceFieldsMixin
 from syntara.core.utils.sqlmodel import postgres_enum_column
-from syntara.workflows.models.activity_execution import ActivityExecution  # noqa: TC001
 from syntara.workflows.models.workflow_definition import WorkflowDefinition
 
 if TYPE_CHECKING:
+    from syntara.workflows.models.activity_execution import ActivityExecution
     from syntara.workflows.models.workflow import Workflow
     from syntara.workflows.models.workflow_version import WorkflowVersion
 
@@ -289,7 +289,6 @@ class Execution(UserOwnedResource, table=True):
         nullable=True,
         sa_type=DateTime(timezone=True),  # type: ignore[call-overload]
         description="When this execution first entered stalled state (set once, permanent)",
-        index=True,
     )
 
     # Note: creator and updater relationships inherited from UserOwnedResource
@@ -440,6 +439,7 @@ class ActivityData(SQLModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
     iteration: int | None = None
+    stall_alert_at: datetime | None = None
 
 
 class ExecutionRead(UserReferenceFieldsMixin, SQLModel):

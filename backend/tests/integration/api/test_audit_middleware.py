@@ -6,13 +6,16 @@ and activity_id from URL paths and includes them in emitted audit events.
 
 # mypy: disable-error-code="attr-defined"
 
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from syntara.audit.dispatcher import AuditEventDispatcher
 from syntara.audit.events.http_request import HTTPRequestEvent, HTTPRequestHandler
@@ -28,6 +31,31 @@ if TYPE_CHECKING:
 def ensure_http_request_handler_registered() -> None:
     """Ensure HTTPRequestHandler is registered before each test."""
     AuditEventDispatcher.register({HTTPRequestEvent: HTTPRequestHandler()})
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def use_test_database_for_outbox(
+    base_client: AsyncClient,
+    test_db_session_factory: async_sessionmaker[AsyncSession],
+) -> AsyncGenerator[None]:
+    """Point the cached outbox worker at this test's isolated database.
+
+    The app-scoped worker is a singleton, but integration tests restore the
+    database per test. Keep both outbox reads and asynchronous writes on the
+    same function-scoped test engine, and discard pending tasks tied to an
+    earlier pytest event loop.
+    """
+    worker = get_outbox_worker()
+    worker._pending.clear()
+    original_write_factory = worker._write_session_factory
+    original_session_factory = worker._session_factory
+    worker._write_session_factory = test_db_session_factory
+    worker._session_factory = test_db_session_factory
+    try:
+        yield
+    finally:
+        worker._write_session_factory = original_write_factory
+        worker._session_factory = original_session_factory
 
 
 @pytest.mark.asyncio
