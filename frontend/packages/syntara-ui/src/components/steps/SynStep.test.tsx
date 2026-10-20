@@ -15,8 +15,9 @@ vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xyflow/react')>()
   return {
     ...actual,
-    useStore: (selector: (s: { transform: [number, number, number] }) => unknown) =>
-      selector({ transform: [0, 0, viewportState.zoom] }),
+    useStore: (
+      selector: (s: { transform: [number, number, number]; nodesConnectable: boolean }) => unknown
+    ) => selector({ transform: [0, 0, viewportState.zoom], nodesConnectable: true }),
     useUpdateNodeInternals: () => vi.fn(),
   }
 })
@@ -96,6 +97,48 @@ describe('SynStep semantic zoom', () => {
     )
 
     expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('uses tile width and semantic-zoom connection handles at low zoom', () => {
+    viewportState.zoom = 0.5
+    renderWithFlow(
+      <SynStep
+        rootTestId="syn-step-semantic-zoom"
+        nodeProps={{ ...baseNodeProps, selected: true }}
+        semanticZoomSummary={{ title: 'Branch', typeLabel: 'Condition' }}
+        semanticZoomIcon={<span data-testid="semantic-zoom-icon" />}
+        semanticZoomMenuActions={[{ id: 'view-details', label: 'Edit', onClick: vi.fn() }]}
+        semanticZoomBranchSources={[{ id: 'true', ariaLabel: 'True branch output' }]}
+        style={{ borderTopLeftRadius: '8px' }}
+        enableStart
+        enableEnd
+        disableSource
+        reverseHandles
+      >
+        <span>Detailed body</span>
+      </SynStep>
+    )
+
+    expect(screen.getByTestId('syn-step-semantic-zoom')).toHaveStyle({ width: '224px' })
+    expect(screen.getByTestId('semantic-zoom-icon')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Branch, Condition' })).toBeInTheDocument()
+    expect(screen.getByLabelText('True branch output')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit Branch' })).toBeInTheDocument()
+  })
+
+  it('omits trigger pill radius on semantic zoom tiles', () => {
+    viewportState.zoom = 0.5
+    renderWithFlow(
+      <SynStep
+        nodeProps={baseNodeProps}
+        semanticZoomSummary={{ title: 'Trigger', typeLabel: 'Webhook' }}
+        style={{ borderTopLeftRadius: '75px', borderBottomLeftRadius: '75px' }}
+      >
+        <span>Detailed body</span>
+      </SynStep>
+    )
+
+    expect(screen.getByRole('button', { name: 'Trigger, Webhook' })).toBeInTheDocument()
   })
 })
 

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { ReactFlowProvider } from '@xyflow/react'
 import type { ReactElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -97,11 +98,13 @@ describe('SynStepSemanticZoomBody', () => {
     expect(updateNodeInternals).toHaveBeenCalledWith('semantic-zoom-node')
   })
 
-  it('shows edit and menu actions when connectable and not in read-only views', () => {
+  it('shows edit and menu actions when connectable and not in read-only views', async () => {
+    const user = userEvent.setup()
     const onEdit = vi.fn()
     renderWithFlow(
       <SynStepSemanticZoomBody
         {...baseProps}
+        selected
         menuActions={[
           { id: 'view-details', label: 'Edit', onClick: onEdit },
           { id: 'delete', label: 'Delete', onClick: vi.fn() },
@@ -109,7 +112,7 @@ describe('SynStepSemanticZoomBody', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Analyze Data' }))
+    await user.click(screen.getByRole('button', { name: 'Edit Analyze Data' }))
     expect(onEdit).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('button', { name: 'Step actions menu' })).toBeInTheDocument()
   })
@@ -147,9 +150,15 @@ describe('SynStepSemanticZoomBody', () => {
     expect(screen.queryByRole('button', { name: 'Edit Analyze Data' })).not.toBeInTheDocument()
   })
 
-  it('marks root selected when selected prop is true', () => {
-    const { container } = renderWithFlow(<SynStepSemanticZoomBody {...baseProps} selected />)
-    expect(container.querySelector('[data-selected="true"]')).toBeInTheDocument()
+  it('shows overlay actions when selected without hover', () => {
+    renderWithFlow(
+      <SynStepSemanticZoomBody
+        {...baseProps}
+        selected
+        menuActions={[{ id: 'view-details', label: 'Edit', onClick: vi.fn() }]}
+      />
+    )
+    expect(screen.getByRole('button', { name: 'Edit Analyze Data' })).toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {
