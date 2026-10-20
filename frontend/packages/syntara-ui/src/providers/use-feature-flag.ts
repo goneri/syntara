@@ -4,7 +4,7 @@ import type { FeatureFlag, FeatureFlagConfig } from '../utils/feature-flags'
 
 import { FeatureFlagsContext } from './feature-flags-context'
 
-/** Returns whether a registered feature flag is enabled in the current app snapshot. */
+/** Returns the current feature flag configuration from the provider. */
 export function useFeatureFlags(): FeatureFlagConfig {
   const overrides = use(FeatureFlagsContext)
   if (overrides === null) {

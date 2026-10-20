@@ -167,4 +167,3 @@ Review every flag quarterly with its owner. Confirm that it is still needed and 
 
 - [TanStack Router context](https://tanstack.com/router/latest/docs/guide/router-context)
 - [GitLab feature flag development guidance](https://docs.gitlab.com/development/feature_flags/)
-- [LaunchDarkly guidance on managing technical debt from flags](https://launchdarkly.com/docs/eu-docs/guides/flags/technical-debt)

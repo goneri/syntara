@@ -636,6 +636,10 @@ export function BuilderContent(props: BuilderContentProps) {
                   isNodeEditorOpen={isNodeEditorOpen}
                 />
               </StackItem>
+              {/*
+                Temporary proof of concept. Remove this marker and flag once
+                workflow-builder improvements ship and no code depends on it.
+              */}
               {isWorkflowBuilderQolEnabled && (
                 <StackItem>
                   <SynLabel status="info">workflow_builder_qol is enabled (test proof of concept)</SynLabel>
