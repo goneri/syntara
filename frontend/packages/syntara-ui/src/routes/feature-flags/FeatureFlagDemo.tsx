@@ -5,14 +5,14 @@ import { SynPageHeader } from '../../components/layout/SynPageHeader'
 import { SynPanel } from '../../components/layout/SynPanel'
 import { SynPanelContentStack } from '../../components/layout/SynPanelContentStack'
 import { useFeatureFlag } from '../../providers/use-feature-flag'
-import { getFeatureFlagStorageKey } from '../../utils/feature-flags'
+import { toFeatureFlagKey } from '../../utils/feature-flags'
 
 /** Small direct-link page for demonstrating a local feature flag. */
 export function FeatureFlagDemo() {
   const isEnabled = useFeatureFlag('workflow_builder_qol')
 
   function toggleFlag() {
-    globalThis.localStorage.setItem(getFeatureFlagStorageKey('workflow_builder_qol'), isEnabled ? 'false' : 'true')
+    globalThis.localStorage.setItem(toFeatureFlagKey('workflow_builder_qol'), isEnabled ? 'false' : 'true')
     globalThis.location.reload()
   }
 

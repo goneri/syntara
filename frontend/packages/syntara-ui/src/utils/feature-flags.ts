@@ -11,7 +11,7 @@ export const FEATURE_FLAG_STORAGE_PREFIX = 'syn.flags.'
 export type FeatureFlagStorageKey = `${typeof FEATURE_FLAG_STORAGE_PREFIX}${FeatureFlagName}`
 
 /** Returns the browser storage key for one registered flag. */
-export function getFeatureFlagStorageKey(flagName: FeatureFlagName): FeatureFlagStorageKey {
+export function toFeatureFlagKey(flagName: FeatureFlagName): FeatureFlagStorageKey {
   return `${FEATURE_FLAG_STORAGE_PREFIX}${flagName}`
 }
 
@@ -20,7 +20,7 @@ export type FeatureFlag = Partial<Record<FeatureFlagName, boolean>>
 
 function readFeatureFlags(): FeatureFlag {
   const storage = globalThis.localStorage
-  const registeredKeys = new Set<string>(FEATURE_FLAG_NAMES.map(getFeatureFlagStorageKey))
+  const registeredKeys = new Set<string>(FEATURE_FLAG_NAMES.map(toFeatureFlagKey))
 
   for (let index = 0; index < storage.length; index += 1) {
     const key = storage.key(index)
@@ -31,7 +31,7 @@ function readFeatureFlags(): FeatureFlag {
 
   const flags: FeatureFlag = {}
   for (const flagName of FEATURE_FLAG_NAMES) {
-    const storedValue = storage.getItem(getFeatureFlagStorageKey(flagName))
+    const storedValue = storage.getItem(toFeatureFlagKey(flagName))
     if (storedValue === null) {
       continue
     }

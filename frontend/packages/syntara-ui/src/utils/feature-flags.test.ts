@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it } from 'vitest'
 
-import { FEATURE_FLAG_STORAGE_PREFIX, getFeatureFlagStorageKey, isFeatureFlagEnabled } from './feature-flags'
+import { FEATURE_FLAG_STORAGE_PREFIX, isFeatureFlagEnabled, toFeatureFlagKey } from './feature-flags'
 import type { FeatureFlagName, FeatureFlagStorageKey } from './feature-flags'
 
-const workflowBuilderQolStorageKey = getFeatureFlagStorageKey('workflow_builder_qol')
+const workflowBuilderQolStorageKey = toFeatureFlagKey('workflow_builder_qol')
 
 function clearFeatureFlagStorage() {
   for (let index = globalThis.localStorage.length - 1; index >= 0; index -= 1) {
@@ -28,7 +28,7 @@ describe('feature flag TypeScript API', () => {
   it('uses the Syntara feature flag storage namespace', () => {
     expect(FEATURE_FLAG_STORAGE_PREFIX).toBe('syn.flags.')
     expect(workflowBuilderQolStorageKey).toBe('syn.flags.workflow_builder_qol')
-    expectTypeOf<ReturnType<typeof getFeatureFlagStorageKey>>().toEqualTypeOf<FeatureFlagStorageKey>()
+    expectTypeOf<ReturnType<typeof toFeatureFlagKey>>().toEqualTypeOf<FeatureFlagStorageKey>()
   })
 
   it('only accepts names from the registered flag union', () => {

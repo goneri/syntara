@@ -13,7 +13,7 @@ import { FeatureFlagsProvider } from '../../providers/feature-flags-provider'
 import { ColorSchemeProvider } from '../../providers/theme/ColorSchemeProvider'
 import { useWorkflowStore } from '../../stores/useWorkflowStore'
 import { routerTestState } from '../../test/setup'
-import { getFeatureFlagStorageKey } from '../../utils/feature-flags'
+import { toFeatureFlagKey } from '../../utils/feature-flags'
 import { transformExecutionStatusFilter } from '../executions/executionFilters'
 
 type WorkflowWithVersion = WorkflowAPI.components['schemas']['WorkflowReadWithVersion']
@@ -98,7 +98,7 @@ const queryClient = new QueryClient({
   },
 })
 
-const workflowBuilderQolStorageKey = getFeatureFlagStorageKey('workflow_builder_qol')
+const workflowBuilderQolStorageKey = toFeatureFlagKey('workflow_builder_qol')
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={queryClient}>

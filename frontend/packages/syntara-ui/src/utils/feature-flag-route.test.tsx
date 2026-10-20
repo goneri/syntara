@@ -10,9 +10,9 @@ import {
 import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { getFeatureFlagStorageKey, isFeatureFlagEnabled } from './feature-flags'
+import { isFeatureFlagEnabled, toFeatureFlagKey } from './feature-flags'
 
-const workflowBuilderQolStorageKey = getFeatureFlagStorageKey('workflow_builder_qol')
+const workflowBuilderQolStorageKey = toFeatureFlagKey('workflow_builder_qol')
 
 function createFeatureFlagRouter() {
   const rootRoute = createRootRoute({ component: Outlet })

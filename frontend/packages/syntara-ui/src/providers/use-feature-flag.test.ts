@@ -1,12 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { getFeatureFlagStorageKey } from '../utils/feature-flags'
+import { toFeatureFlagKey } from '../utils/feature-flags'
 
 import { FeatureFlagsProvider } from './feature-flags-provider'
 import { useFeatureFlag } from './use-feature-flag'
 
-const workflowBuilderQolStorageKey = getFeatureFlagStorageKey('workflow_builder_qol')
+const workflowBuilderQolStorageKey = toFeatureFlagKey('workflow_builder_qol')
 
 describe('useFeatureFlag', () => {
   beforeEach(() => {

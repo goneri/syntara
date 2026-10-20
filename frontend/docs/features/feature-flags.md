@@ -92,9 +92,9 @@ In tests, do not mock `useFeatureFlag`. Set `localStorage` before you render `Fe
 import { render } from '@testing-library/react'
 
 import { FeatureFlagsProvider } from '../../providers/feature-flags-provider'
-import { getFeatureFlagStorageKey } from '../../utils/feature-flags'
+import { toFeatureFlagKey } from '../../utils/feature-flags'
 
-localStorage.setItem(getFeatureFlagStorageKey('workflow_builder_qol'), 'true')
+localStorage.setItem(toFeatureFlagKey('workflow_builder_qol'), 'true')
 
 render(
   <FeatureFlagsProvider>
