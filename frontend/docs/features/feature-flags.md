@@ -67,23 +67,6 @@ The previous `flags.<name>` keys and the former `feature-flags` JSON key are no 
 
 Visit `/feature-flag-demo` to show placeholder content controlled by `workflow_builder_qol`. The route is not in navigation. Use its button to turn the flag on or off; it saves the flat local-storage value and reloads the page so the provider picks up the change.
 
-## Demo walkthrough
-
-1. Start the branch locally with `syn-dev` and wait for its readiness output. Use the `UI` endpoint printed for that run; `syn-dev` assigns ports dynamically, so do not rely on a fixed port. Append `/feature-flag-demo` to that UI URL.
-2. Open the route. Its starting state reflects this browser's saved flag value, so it may already be on if you used the demo before.
-3. Click **Turn demo flag on**. The page reloads, the status changes to enabled, and the placeholder “New workflow builder experience” content appears.
-4. In browser DevTools, inspect Local Storage for the UI origin. The key `syn.flags.workflow_builder_qol` should have the string value `true`.
-5. Click **Turn demo flag off**. The page reloads, the placeholder disappears, and the key value becomes the string `false`.
-
-To reset the demo to its default state, remove the key in DevTools or run this in the browser console, then reload:
-
-```js
-localStorage.removeItem('syn.flags.workflow_builder_qol')
-location.reload()
-```
-
-The flag controls client-side UI only. It does not grant permissions or protect backend data.
-
 ## Test a flagged component
 
 In tests, do not mock `useFeatureFlag`. Set `localStorage` before you render `FeatureFlagsProvider`. This tests storage validation and context wiring. The provider reads the values when it mounts. In this example, `Example` is the flagged component from the earlier example.
