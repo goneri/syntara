@@ -5,23 +5,12 @@ import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ensureDocumentColorScheme } from './providers/theme/colorScheme.js'
 import { registerAllNodes } from './routes/builder/registry/nodes'
-import { FEATURE_FLAG_NAMES, isFeatureFlagEnabled, toFeatureFlagKey } from './utils/feature-flags'
 import './index.css'
 
 // Register all workflow step types (Add step panel) before app initialization
 registerAllNodes()
 
 ensureDocumentColorScheme()
-
-if (import.meta.env.DEV) {
-  const featureFlagRows = FEATURE_FLAG_NAMES.map((flagName) => ({
-    key: toFeatureFlagKey(flagName),
-    state: isFeatureFlagEnabled(flagName) ? 'enabled' : 'disabled',
-  }))
-
-  console.info('[syn] Feature flags loaded')
-  console.table(featureFlagRows)
-}
 
 const App = lazy(() => import('./app/App.js'))
 
