@@ -70,18 +70,13 @@ describe('SynStepSemanticZoomBody', () => {
   })
 
   it('renders semantic zoom icon slot when icon is provided', () => {
-    renderWithFlow(
-      <SynStepSemanticZoomBody {...baseProps} icon={<span data-testid="zoom-icon">icon</span>} />
-    )
+    renderWithFlow(<SynStepSemanticZoomBody {...baseProps} icon={<span data-testid="zoom-icon">icon</span>} />)
     expect(screen.getByTestId('zoom-icon')).toBeInTheDocument()
   })
 
   it('calls updateNodeInternals when branch source count changes', () => {
     const { rerender } = renderWithFlow(
-      <SynStepSemanticZoomBody
-        {...baseProps}
-        branchSources={[{ id: 'true', ariaLabel: 'True branch output' }]}
-      />
+      <SynStepSemanticZoomBody {...baseProps} branchSources={[{ id: 'true', ariaLabel: 'True branch output' }]} />
     )
     expect(updateNodeInternals).toHaveBeenCalledWith('semantic-zoom-node')
 
@@ -127,9 +122,7 @@ describe('SynStepSemanticZoomBody', () => {
 
     executionViewState.isExecutionView = false
     activeExecutionState.isActiveExecution = true
-    const { unmount: unmount2 } = renderWithFlow(
-      <SynStepSemanticZoomBody {...baseProps} menuActions={menuActions} />
-    )
+    const { unmount: unmount2 } = renderWithFlow(<SynStepSemanticZoomBody {...baseProps} menuActions={menuActions} />)
     expect(screen.queryByRole('button', { name: 'Edit Analyze Data' })).not.toBeInTheDocument()
     unmount2()
 
@@ -142,10 +135,7 @@ describe('SynStepSemanticZoomBody', () => {
   it('hides actions when nodes are not connectable', () => {
     nodesConnectableState.nodesConnectable = false
     renderWithFlow(
-      <SynStepSemanticZoomBody
-        {...baseProps}
-        menuActions={[{ id: 'view-details', label: 'Edit', onClick: vi.fn() }]}
-      />
+      <SynStepSemanticZoomBody {...baseProps} menuActions={[{ id: 'view-details', label: 'Edit', onClick: vi.fn() }]} />
     )
     expect(screen.queryByRole('button', { name: 'Edit Analyze Data' })).not.toBeInTheDocument()
   })

@@ -125,6 +125,21 @@ describe('SynStep semantic zoom', () => {
     expect(screen.getByRole('button', { name: 'Edit Branch' })).toBeInTheDocument()
   })
 
+  it('renders dashed-border semantic zoom tile when placeholder styling is set', () => {
+    viewportState.zoom = 0.5
+    renderWithFlow(
+      <SynStep
+        nodeProps={{ ...baseNodeProps, selected: true }}
+        hasDashedBorder
+        semanticZoomSummary={{ title: 'Pick type', typeLabel: 'Generic' }}
+      >
+        <span>Detailed body</span>
+      </SynStep>
+    )
+
+    expect(screen.getByRole('button', { name: 'Pick type, Generic' })).toBeInTheDocument()
+  })
+
   it('omits trigger pill radius on semantic zoom tiles', () => {
     viewportState.zoom = 0.5
     renderWithFlow(
