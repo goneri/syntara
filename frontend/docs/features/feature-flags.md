@@ -65,7 +65,16 @@ The previous `flags.<name>` keys and the former `feature-flags` JSON key are no 
 
 ## Demo route
 
-Visit `/feature-flag-demo` to show placeholder content controlled by `workflow_builder_qol`. The route is not in navigation. Use its button to turn the flag on or off; it saves the flat local-storage value and reloads the page so the provider picks up the change.
+Visit `/feature-flag-demo` to demonstrate route guarding. Its TanStack Router `beforeLoad` check reads `workflow_builder_qol` from router context before the page loads. When the flag is off or missing, the router redirects to `/workflows`. When the flag is the string `true`, the route loads and shows the guarded placeholder content. The route is not in navigation.
+
+Set the flag from the browser console, then open the demo route:
+
+```js
+localStorage.setItem('syn.flags.workflow_builder_qol', 'true')
+location.assign('/feature-flag-demo')
+```
+
+Remove the key or set it to `false`, then open the route again to see the redirect. This is a client-side routing demonstration, not an access-control boundary.
 
 ## Test a flagged component
 
@@ -90,25 +99,55 @@ Clear the storage key after each test so one test does not affect another.
 
 ## Gate a route
 
-Use TanStack Router's `beforeLoad` option when a flag controls access to a route. This works with code-based routes created with `createRoute`; file-based routing is not required. `beforeLoad` runs outside React, so use `isFeatureFlagEnabled` instead of the React hook.
+Use TanStack Router's typed router context when a flag controls route loading. The app passes the `FeatureFlagsProvider` snapshot to `<RouterProvider context={...} />`. Read flags from `context.featureFlags` in `beforeLoad`; do not read local storage there or call a React hook. This works with code-based routes created with `createRoute`; file-based routing is not required.
 
 ```tsx
-import { createRoute, redirect } from '@tanstack/react-router'
+import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router'
 
-import { rootRoute } from './__root'
-import { isFeatureFlagEnabled } from '../../utils/feature-flags'
+import type { FeatureFlag } from '../../utils/feature-flags'
+
+type AppRouterContext = {
+  featureFlags: FeatureFlag
+}
+
+const rootRoute = createRootRouteWithContext<AppRouterContext>()({ component: App })
 
 const featureRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/feature-example',
-  beforeLoad: () => {
-    if (!isFeatureFlagEnabled('workflow_builder_qol')) {
-      return redirect({ to: '/workflows', replace: true })
+  beforeLoad: ({ context }) => {
+    if (context.featureFlags.workflow_builder_qol !== true) {
+      throw redirect({ to: '/workflows', replace: true })
     }
   },
   component: Example,
 })
 ```
+
+Create the router with a safe default:
+
+```tsx
+const tanstackRouter = createRouter({
+  routeTree,
+  context: { featureFlags: {} },
+})
+```
+
+Then inject the provider snapshot from React:
+
+```tsx
+import { RouterProvider } from '@tanstack/react-router'
+
+import { useFeatureFlags } from '../providers/use-feature-flag'
+import { tanstackRouter } from './tanstackRouter'
+
+function AppRouter() {
+  const featureFlags = useFeatureFlags()
+  return <RouterProvider router={tanstackRouter} context={{ featureFlags }} />
+}
+```
+
+The root route context and initial router context keep the values typed. React components should continue to use `useFeatureFlag`; route guards should use `context.featureFlags`.
 
 Hide the route's navigation link when the flag is off. A route guard controls frontend navigation. It does not protect backend data or actions.
 
@@ -124,5 +163,6 @@ Review every flag quarterly with its owner. Confirm that it is still needed and 
 
 ## Further reading
 
+- [TanStack Router context](https://tanstack.com/router/latest/docs/guide/router-context)
 - [GitLab feature flag development guidance](https://docs.gitlab.com/development/feature_flags/)
 - [LaunchDarkly guidance on managing technical debt from flags](https://launchdarkly.com/docs/eu-docs/guides/flags/technical-debt)
