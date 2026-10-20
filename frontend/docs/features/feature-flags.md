@@ -61,6 +61,8 @@ location.reload()
 
 The module checks each `syn.flags.` key and value in storage. A missing flag is off. An unknown flag name or a value other than the strings `true` and `false` turns all flags off. Only the string value `true` turns a flag on.
 
+In development, the browser console shows a table of each registered flag's storage key and effective state once when the app loads. Reload after changing local storage to see the updated state. Vite removes this development-only log from production builds.
+
 The previous `flags.<name>` keys and the former `feature-flags` JSON key are no longer read. Remove stale values with `localStorage.removeItem('flags.workflow_builder_qol')` and `localStorage.removeItem('feature-flags')` if needed.
 
 ## Demo route
