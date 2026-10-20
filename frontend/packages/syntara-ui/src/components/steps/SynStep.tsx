@@ -1,26 +1,22 @@
 import { Icon, Label } from '@patternfly/react-core'
 import { RhUiWarningFillIcon } from '@patternfly/react-icons'
-import { ExecutorTypeEnum, type TaskActivity } from '@syntara/contracts'
-import { Handle, type NodeProps, Position } from '@xyflow/react'
+import type { NodeProps } from '@xyflow/react'
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { FlowNodeType } from '../../constants'
 import { ExecutionStatusBadge } from '../../routes/builder/components/ExecutionStatusBadge'
-import { targetHandleStyle, sourceHandleStyle } from '../../routes/workflows/canvas/nodes/common/handleStyle'
 import type { NodeMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useNodeMenuActions'
 import { useSemanticZoom } from '../../routes/workflows/canvas/nodes/hooks/useSemanticZoom'
 import { NODE_TYPE_COLORS } from '../../routes/workflows/canvas/nodeTypeColors'
-import {
-  SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX,
-  SEMANTIC_ZOOM_TILE_SIZE_PX,
-} from '../../routes/workflows/canvas/semanticZoom'
+import { SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX } from '../../routes/workflows/canvas/semanticZoom'
 import type { SemanticZoomBranchSource } from '../../routes/workflows/canvas/semanticZoomTypes'
 import type { ActivityStatus } from '../../routes/workflows/execution/types'
 import { SynPanel } from '../layout/SynPanel'
 
+import { SynStepConnectionHandles } from './SynStepConnectionHandles'
 import { SynStepExpandedAllContext } from './SynStepExpandedAllContext'
 import { SynStepExpandedContext } from './SynStepExpandedContext'
 import { SynStepSemanticZoomBody } from './SynStepSemanticZoomBody'
+import { getSynStepNodeWidth } from './synStepNodeWidth'
 
 type ExecutionState = {
   status: ActivityStatus
@@ -29,9 +25,6 @@ type ExecutionState = {
   error_details?: string
   retry_count?: number
 }
-
-const DEFAULT_NODE_WIDTH = 240
-const WIDE_NODE_WIDTH = 360
 
 const NODE_BOTTOM_BADGE_STYLE: React.CSSProperties = {
   position: 'absolute',
@@ -79,94 +72,6 @@ function ValidationErrorBadge() {
         <RhUiWarningFillIcon style={{ color: 'var(--pf-t--global--color--status--warning--default)' }} />
       </Icon>
     </div>
-  )
-}
-
-const isWideTaskNode = (nodeProps: NodeProps) => {
-  if (nodeProps.type === FlowNodeType.GENERIC) {
-    return true
-  }
-
-  if (nodeProps.type !== FlowNodeType.TASK && nodeProps.type !== FlowNodeType.TASK_REVERSED) {
-    return false
-  }
-
-  const data = nodeProps.data as TaskActivity | undefined
-  if (!data) return false
-
-  // In v2, activity.type IS the executor directly (no task.executor wrapper)
-  if (data.type === ExecutorTypeEnum.AGENTIC) {
-    return true
-  }
-
-  return false
-}
-
-function getSynStepNodeWidth(isSemanticZoom: boolean, nodeProps: NodeProps): number {
-  if (isSemanticZoom) {
-    return SEMANTIC_ZOOM_TILE_SIZE_PX
-  }
-  if (isWideTaskNode(nodeProps)) {
-    return WIDE_NODE_WIDTH
-  }
-  return DEFAULT_NODE_WIDTH
-}
-
-type SynStepConnectionHandlesProps = {
-  isSemanticZoom: boolean
-  semanticZoomHandleStyle: React.CSSProperties
-  disableTarget?: boolean
-  disableSource?: boolean
-  enableStart?: boolean
-  enableEnd?: boolean
-  reverseHandles?: boolean
-}
-
-function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandlesProps>) {
-  const handleStyle = props.isSemanticZoom
-    ? (base: React.CSSProperties) => ({ ...base, ...props.semanticZoomHandleStyle })
-    : (base: React.CSSProperties) => base
-
-  return (
-    <>
-      {!props.disableTarget && (
-        <Handle
-          type="target"
-          id="target"
-          position={props.reverseHandles ? Position.Right : Position.Left}
-          style={handleStyle(targetHandleStyle)}
-        />
-      )}
-      {!props.disableSource && (
-        <Handle
-          type="source"
-          id="source"
-          position={props.reverseHandles ? Position.Left : Position.Right}
-          style={handleStyle(sourceHandleStyle)}
-        />
-      )}
-      {props.enableStart && (
-        <Handle
-          type="source"
-          id="start"
-          position={Position.Right}
-          style={{ ...handleStyle(sourceHandleStyle), top: '85%' }}
-        />
-      )}
-      {props.enableEnd && (
-        <Handle
-          type="target"
-          id="end"
-          position={Position.Left}
-          style={{
-            ...handleStyle(targetHandleStyle),
-            top: '50%',
-            opacity: 0,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-    </>
   )
 }
 
