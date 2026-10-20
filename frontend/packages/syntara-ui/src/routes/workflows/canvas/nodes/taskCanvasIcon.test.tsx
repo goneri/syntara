@@ -34,6 +34,16 @@ describe('getTaskCanvasIcon', () => {
     expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
   })
 
+  it('falls back to task type when executor metadata is missing', () => {
+    const data = makeTask({
+      name: 'HTTP',
+      type: ExecutorTypeEnum.HTTP_REQUEST,
+      parameters: { method: 'GET', url: 'https://example.com' },
+    })
+    render(<>{getTaskCanvasIcon(data)}</>)
+    expect(screen.getByTestId('node-icon-wrapper')).toBeInTheDocument()
+  })
+
   it('returns undefined when executor metadata has no icon', () => {
     const data = {
       type: 'task',
