@@ -6,7 +6,7 @@ A feature flag enables temporary behavior in the frontend. A flag does not grant
 
 Flags are off unless browser storage sets a registered flag to the string value `true` under its `syn.flags.<name>` key. `FeatureFlagsProvider` reads a snapshot when the app starts. Reload the page after you change a saved value.
 
-This proof of concept uses a small in-repository feature-flag implementation rather than a flag-management library. TypeScript provides registered names, and the reader accepts only the exact strings `true` and `false`. The current need is one registered boolean flag, a browser-local override, and a reload. A remote flag service is outside this scope. Revisit this choice if flags need centralized control, targeting, or analytics.
+This proof of concept uses a small in-repository feature-flag implementation rather than a flag-management library. TypeScript provides registered names, and Zod validates stored names and the exact strings `true` and `false`. The current need is one registered boolean flag, a browser-local override, and a reload. A remote flag service is outside this scope. Revisit this choice if flags need centralized control, targeting, or analytics.
 
 ## Add and use a flag
 
@@ -159,9 +159,9 @@ The `workflow_builder_qol` proof of concept only controls a small marker. Do not
 
 Review every flag quarterly with its owner. Confirm that it is still needed and that its removal condition is current. Remove a flag when its condition is met. Delete its registry entry, application code, tests, and catalog row, and clear stale browser storage values.
 
-| Name                   | Purpose                                           | Date added | Owner       | Lifecycle | When to remove                                                                                                                         |
-| ---------------------- | ------------------------------------------------- | ---------- | ----------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `workflow_builder_qol` | Gates in-progress workflow canvas UX improvements | 2026-10-19 | Nick Lemmon | Temporary | Remove after the related workflow-builder improvements ship and no code needs the flag. Remove sooner if we stop the proof of concept. |
+| Name                   | Purpose                                           | Date added | Owner       | Ticket name                                                                       | Lifecycle | When to remove                                                                                                                         |
+| ---------------------- | ------------------------------------------------- | ---------- | ----------- | --------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `workflow_builder_qol` | Gates in-progress workflow canvas UX improvements | 2026-10-19 | Nick Lemmon | [UI] [QoL] Add Zod-validated, browser-local feature flags to the Syntara frontend | Temporary | Remove after the related workflow-builder improvements ship and no code needs the flag. Remove sooner if we stop the proof of concept. |
 
 ## Further reading
 

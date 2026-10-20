@@ -1,5 +1,10 @@
+import { z } from 'zod'
+
 /** All feature flags registered in the Syntara UI. */
 export const FEATURE_FLAG_NAMES = ['workflow_builder_qol'] as const
+
+const featureFlagNameSchema = z.enum(FEATURE_FLAG_NAMES)
+const featureFlagStorageValueSchema = z.enum(['true', 'false'])
 
 /** A registered feature flag key. */
 export type FeatureFlag = (typeof FEATURE_FLAG_NAMES)[number]
@@ -20,11 +25,13 @@ export type FeatureFlagConfig = Partial<Record<FeatureFlag, boolean>>
 
 function readFeatureFlags(): FeatureFlagConfig {
   const storage = globalThis.localStorage
-  const registeredKeys = new Set<string>(FEATURE_FLAG_NAMES.map(toFeatureFlagKey))
 
   for (let index = 0; index < storage.length; index += 1) {
     const key = storage.key(index)
-    if (key?.startsWith(FEATURE_FLAG_STORAGE_PREFIX) && !registeredKeys.has(key)) {
+    if (
+      key?.startsWith(FEATURE_FLAG_STORAGE_PREFIX) &&
+      !featureFlagNameSchema.safeParse(key.slice(FEATURE_FLAG_STORAGE_PREFIX.length)).success
+    ) {
       return {}
     }
   }
@@ -35,10 +42,11 @@ function readFeatureFlags(): FeatureFlagConfig {
     if (storedValue === null) {
       continue
     }
-    if (storedValue !== 'true' && storedValue !== 'false') {
+    const parsedValue = featureFlagStorageValueSchema.safeParse(storedValue)
+    if (!parsedValue.success) {
       return {}
     }
-    flags[flagName] = storedValue === 'true'
+    flags[flagName] = parsedValue.data === 'true'
   }
 
   return flags
