@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 
+from syntara.workflow_runtime.container import ContainerExecutionRequest
 from syntara.workflow_runtime.contracts import ActivityContext, ActivityError, Completed, Deferred
 from syntara.workflow_runtime.engines.temporal.registered_activities import RegisteredActivities
 from syntara.workflow_runtime.registry import ActivityDefinition, ActivityRegistry
@@ -114,6 +115,44 @@ async def test_adapter_defers_only_after_persisted_handoff() -> None:
                 }
             )
     handoff.assert_awaited_once_with(reference, Deferred(reference, "approval"))
+
+
+@pytest.mark.asyncio
+async def test_adapter_routes_container_activity_to_executor() -> None:
+    """Container metadata selects the injected execution boundary."""
+    registry = ActivityRegistry()
+    definition = ActivityDefinition(
+        "http_request.execute",
+        1,
+        AsyncMock(side_effect=AssertionError("worker handler must not run")),
+        execution_mode="container",
+        container_image="example/http-runner:dev",
+    )
+    registry.register(definition)
+    executor = MagicMock()
+    executor.run = AsyncMock(return_value=Completed({"status_code": 200}))
+    adapter = RegisteredActivities(registry, MagicMock(), MagicMock(), container_executor=executor)
+    execution_id = uuid4()
+    project_id = uuid4()
+
+    with patch("temporalio.activity.info", return_value=MagicMock(activity_id="http_1")):
+        result = await adapter.execute(
+            {
+                "name": "http_request.execute",
+                "version": 1,
+                "input": {"url": "https://example.com"},
+                "execution_id": str(execution_id),
+                "project_id": str(project_id),
+            }
+        )
+
+    assert result == {"output": {"status_code": 200}}
+    executor.run.assert_awaited_once()
+    request, context = executor.run.await_args.args
+    assert isinstance(request, ContainerExecutionRequest)
+    assert request.image == "example/http-runner:dev"
+    assert request.input == {"url": "https://example.com"}
+    assert context.execution_id == execution_id
 
 
 @pytest.mark.asyncio

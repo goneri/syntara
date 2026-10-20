@@ -18,6 +18,7 @@ from temporalio.exceptions import ApplicationError
 from temporalio.service import RPCError, RPCStatusCode
 
 from syntara.core.lib.encryption import SecretEncryptor
+from syntara.workflow_runtime.container import ContainerExecutionRequest, ContainerExecutor, OpenShiftContainerExecutor
 from syntara.workflow_runtime.contracts import ActivityContext, ActivityError, Completed, Deferred
 from syntara.workflow_runtime.models import ActivityCompletion
 from syntara.workflow_runtime.registry import ActivityRegistry
@@ -34,11 +35,13 @@ class RegisteredActivities:
         registry: ActivityRegistry,
         session_factory: async_sessionmaker[AsyncSession],
         encryptor: SecretEncryptor,
+        container_executor: ContainerExecutor | None = None,
     ) -> None:
         """Receive handler composition and persistence dependencies."""
         self.registry = registry
         self.session_factory = session_factory
         self.encryptor = encryptor
+        self.container_executor = container_executor or OpenShiftContainerExecutor()
 
     async def _reserve(self, request: dict[str, Any], context: ActivityContext) -> UUID:
         info = activity.info()
@@ -127,7 +130,22 @@ class RegisteredActivities:
                     reference,
                 )
                 activity.heartbeat({"stop_monitor": True})
-            outcome = await definition.invoke(request["input"], context)
+            if definition.execution_mode == "container":
+                outcome = await self.container_executor.run(
+                    ContainerExecutionRequest(
+                        activity_name=definition.name,
+                        activity_version=definition.version,
+                        execution_id=context.execution_id,
+                        node_execution_id=context.node_execution_id,
+                        input=request["input"],
+                        image=definition.container_image or "",
+                        timeout_seconds=definition.container_timeout_seconds,
+                    ),
+                    context,
+                )
+            else:
+                outcome = await definition.invoke(request["input"], context)
+            outcome = definition.validate_outcome(outcome, context)
             if reference is not None:
                 await self._handoff(reference, outcome)
         except ActivityError as exc:

@@ -20,6 +20,7 @@ from syntara.core.database.session import AsyncSessionLocal
 from syntara.core.lib.encryption import SecretEncryptor, key_from_string
 from syntara.core.tls.temporal import build_temporal_tls_config
 from syntara.telemetry.client import flush_telemetry, initialize_telemetry
+from syntara.workflow_runtime.container import OpenShiftContainerExecutor
 from syntara.workflow_runtime.engines.temporal.client_interceptor import WorkflowAuthClientInterceptor
 from syntara.workflow_runtime.engines.temporal.codecs.credential_codec import CredentialPayloadCodec
 from syntara.workflow_runtime.engines.temporal.dynamic_workflow import OrchestratorWorkflow
@@ -172,7 +173,12 @@ class TemporalWorkerService:
 
             if self._registered_activity_registry is not None:
                 encryptor = SecretEncryptor(encryption_key)
-                registered = RegisteredActivities(self._registered_activity_registry, AsyncSessionLocal, encryptor)
+                registered = RegisteredActivities(
+                    self._registered_activity_registry,
+                    AsyncSessionLocal,
+                    encryptor,
+                    container_executor=OpenShiftContainerExecutor(),
+                )
                 activities.append(registered.execute)
                 delivery = CompletionDelivery(self.client, AsyncSessionLocal, encryptor)
             else:
