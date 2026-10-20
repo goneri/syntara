@@ -15,8 +15,8 @@ import { useCredentialName } from './hooks/useCredentialName'
 import { MenuNodeType, useNodeMenuActions } from './hooks/useNodeMenuActions'
 import { getTaskIconDescriptor } from './nodeIconResolver'
 import { nodeMetadata, executorMetadata } from './nodeMetadata'
-import { getTaskCanvasIcon } from './taskCanvasIcon'
 import { renderNodeIcon } from './renderNodeIcon'
+import { getTaskCanvasIcon } from './taskCanvasIcon'
 import { getTaskSemanticLabels } from './taskSemanticLabels'
 
 type AAPJobTemplateConfig = {

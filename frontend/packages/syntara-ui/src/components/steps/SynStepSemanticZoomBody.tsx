@@ -96,23 +96,8 @@ export function SynStepSemanticZoomBody(props: {
       <div className={styles.tileRegion}>
         <Tooltip content={tooltipContent} position="top">
           <button type="button" aria-label={ariaLabel} className={styles.tooltipTrigger}>
-            <Flex
-              className={tileClassName}
-              style={props.tileStyle}
-              display={{ default: 'flex' }}
-              alignItems={{ default: 'center' }}
-              justifyContent={{ default: 'center' }}
-            >
-              {props.icon ? (
-                <Flex
-                  className={styles.iconSlot}
-                  display={{ default: 'flex' }}
-                  alignItems={{ default: 'center' }}
-                  justifyContent={{ default: 'center' }}
-                >
-                  {props.icon}
-                </Flex>
-              ) : null}
+            <Flex className={tileClassName} style={props.tileStyle}>
+              {props.icon ? <Flex className={styles.iconSlot}>{props.icon}</Flex> : null}
             </Flex>
           </button>
         </Tooltip>

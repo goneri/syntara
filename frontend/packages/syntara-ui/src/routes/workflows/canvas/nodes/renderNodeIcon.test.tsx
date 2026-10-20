@@ -137,6 +137,14 @@ describe('renderNodeIcon', () => {
     expect(iconWrapper).toHaveClass('pf-m-xl')
   })
 
+  it('uses semanticZoom variant when specified (2xl size)', () => {
+    const view = buildNodeIconView(MockIcon, 'test-node', 'semanticZoom')
+    render(<>{view}</>)
+
+    const iconWrapper = screen.getByTestId('node-icon-wrapper')
+    expect(iconWrapper).toHaveClass('pf-m-2xl')
+  })
+
   it('applies different custom icon offset for header variant', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'header')
     render(<>{view}</>)
