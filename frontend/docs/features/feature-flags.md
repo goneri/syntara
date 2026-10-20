@@ -157,9 +157,9 @@ The `workflow_builder_qol` proof of concept only controls a small marker. Do not
 
 Review every flag quarterly with its owner. Confirm that it is still needed and that its removal condition is current. Remove a flag when its condition is met. Delete its registry entry, application code, tests, and catalog row, and clear stale browser storage values.
 
-| Name                   | Purpose                                    | Date added | Owner       | Work                                                       | Lifecycle | When to remove                                                                                                                   |
-| ---------------------- | ------------------------------------------ | ---------- | ----------- | ---------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `workflow_builder_qol` | Test marker for the workflow builder flag. | 2026-10-19 | Nick Lemmon | [AAP-97515](https://redhat.atlassian.net/browse/AAP-97515) | Temporary | Remove after AAP-96509, AAP-96511, and AAP-96513 ship and no code needs the flag. Remove sooner if we stop the proof of concept. |
+| Name                   | Purpose                                           | Date added | Owner       | Lifecycle | When to remove                                                                                                                         |
+| ---------------------- | ------------------------------------------------- | ---------- | ----------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `workflow_builder_qol` | Gates in-progress workflow canvas UX improvements | 2026-10-19 | Nick Lemmon | Temporary | Remove after the related workflow-builder improvements ship and no code needs the flag. Remove sooner if we stop the proof of concept. |
 
 ## Further reading
 
