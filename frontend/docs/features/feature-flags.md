@@ -10,7 +10,7 @@ This proof of concept uses a small in-repository feature-flag implementation rat
 
 ## Add and use a flag
 
-Add each flag name to `FEATURE_FLAG_NAMES` in `src/utils/feature-flags.ts`. TypeScript builds `FeatureFlagName` from this list. It rejects names that are not in the list.
+Add each flag name to `FEATURE_FLAG_NAMES` in `src/utils/feature-flags.ts`. TypeScript builds the `FeatureFlag` union from this list. It rejects names that are not in the list. `FeatureFlagConfig` is the record of enabled states for those keys.
 
 Use `useFeatureFlag` in a React component:
 
@@ -25,7 +25,7 @@ function Example() {
 
 The app provides `FeatureFlagsProvider`. Tests that render a component with this hook must also render the provider.
 
-Do not cast a string to `FeatureFlagName` to skip the TypeScript check.
+Do not cast a string to `FeatureFlag` to skip the TypeScript check.
 
 ## Set a local value
 
@@ -104,10 +104,10 @@ Use TanStack Router's typed router context when a flag controls route loading. T
 ```tsx
 import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router'
 
-import type { FeatureFlag } from '../../utils/feature-flags'
+import type { FeatureFlagConfig } from '../../utils/feature-flags'
 
 type AppRouterContext = {
-  featureFlags: FeatureFlag
+  featureFlags: FeatureFlagConfig
 }
 
 const rootRoute = createRootRouteWithContext<AppRouterContext>()({ component: App })

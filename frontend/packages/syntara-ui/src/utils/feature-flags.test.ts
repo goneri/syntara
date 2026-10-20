@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it } from 'vitest'
 
 import { FEATURE_FLAG_STORAGE_PREFIX, isFeatureFlagEnabled, toFeatureFlagKey } from './feature-flags'
-import type { FeatureFlagName, FeatureFlagStorageKey } from './feature-flags'
+import type { FeatureFlag, FeatureFlagStorageKey } from './feature-flags'
 
 const workflowBuilderQolStorageKey = toFeatureFlagKey('workflow_builder_qol')
 
@@ -32,8 +32,8 @@ describe('feature flag TypeScript API', () => {
   })
 
   it('only accepts names from the registered flag union', () => {
-    expectTypeOf<IsFeatureFlagEnabled>().parameter(0).toEqualTypeOf<FeatureFlagName>()
-    expectTypeOf<'unregistered_flag'>().not.toExtend<FeatureFlagName>()
+    expectTypeOf<IsFeatureFlagEnabled>().parameter(0).toEqualTypeOf<FeatureFlag>()
+    expectTypeOf<'unregistered_flag'>().not.toExtend<FeatureFlag>()
   })
 })
 

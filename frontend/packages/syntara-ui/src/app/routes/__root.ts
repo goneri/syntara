@@ -2,11 +2,11 @@ import { createRootRouteWithContext, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { detachPromise } from '../../utils/detachPromise'
-import type { FeatureFlag } from '../../utils/feature-flags'
+import type { FeatureFlagConfig } from '../../utils/feature-flags'
 import { RootLayout } from '../RootLayout'
 
 export type AppRouterContext = {
-  featureFlags: FeatureFlag
+  featureFlags: FeatureFlagConfig
 }
 
 /** Catches unmatched URLs and redirects to /workflows via the router (preserving history). */

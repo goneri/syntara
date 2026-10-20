@@ -1,24 +1,24 @@
 /** All feature flags registered in the Syntara UI. */
 export const FEATURE_FLAG_NAMES = ['workflow_builder_qol'] as const
 
-/** The names callers may use when checking a feature flag. */
-export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number]
+/** A registered feature flag key. */
+export type FeatureFlag = (typeof FEATURE_FLAG_NAMES)[number]
 
 /** Prefix for the separate browser storage keys used by Syntara feature flags. */
 export const FEATURE_FLAG_STORAGE_PREFIX = 'syn.flags.'
 
 /** Browser storage keys for the registered feature flags. */
-export type FeatureFlagStorageKey = `${typeof FEATURE_FLAG_STORAGE_PREFIX}${FeatureFlagName}`
+export type FeatureFlagStorageKey = `${typeof FEATURE_FLAG_STORAGE_PREFIX}${FeatureFlag}`
 
 /** Returns the browser storage key for one registered flag. */
-export function toFeatureFlagKey(flagName: FeatureFlagName): FeatureFlagStorageKey {
+export function toFeatureFlagKey(flagName: FeatureFlag): FeatureFlagStorageKey {
   return `${FEATURE_FLAG_STORAGE_PREFIX}${flagName}`
 }
 
-/** Saved values for registered feature flags. */
-export type FeatureFlag = Partial<Record<FeatureFlagName, boolean>>
+/** Enabled-state configuration for registered feature flags. */
+export type FeatureFlagConfig = Partial<Record<FeatureFlag, boolean>>
 
-function readFeatureFlags(): FeatureFlag {
+function readFeatureFlags(): FeatureFlagConfig {
   const storage = globalThis.localStorage
   const registeredKeys = new Set<string>(FEATURE_FLAG_NAMES.map(toFeatureFlagKey))
 
@@ -29,7 +29,7 @@ function readFeatureFlags(): FeatureFlag {
     }
   }
 
-  const flags: FeatureFlag = {}
+  const flags: FeatureFlagConfig = {}
   for (const flagName of FEATURE_FLAG_NAMES) {
     const storedValue = storage.getItem(toFeatureFlagKey(flagName))
     if (storedValue === null) {
@@ -45,7 +45,7 @@ function readFeatureFlags(): FeatureFlag {
 }
 
 /** Returns true only when a registered flag has the stored string value `true`. */
-export function isFeatureFlagEnabled(flagName: FeatureFlagName): boolean {
+export function isFeatureFlagEnabled(flagName: FeatureFlag): boolean {
   try {
     return readFeatureFlags()[flagName] === true
   } catch {

@@ -1,11 +1,11 @@
 import { use } from 'react'
 
-import type { FeatureFlag, FeatureFlagName } from '../utils/feature-flags'
+import type { FeatureFlag, FeatureFlagConfig } from '../utils/feature-flags'
 
 import { FeatureFlagsContext } from './feature-flags-context'
 
 /** Returns whether a registered feature flag is enabled in the current app snapshot. */
-export function useFeatureFlags(): FeatureFlag {
+export function useFeatureFlags(): FeatureFlagConfig {
   const overrides = use(FeatureFlagsContext)
   if (overrides === null) {
     throw new Error('useFeatureFlags must be used within FeatureFlagsProvider')
@@ -15,7 +15,7 @@ export function useFeatureFlags(): FeatureFlag {
 }
 
 /** Returns whether a registered feature flag is enabled in the current app snapshot. */
-export function useFeatureFlag(flagName: FeatureFlagName): boolean {
+export function useFeatureFlag(flagName: FeatureFlag): boolean {
   const overrides = use(FeatureFlagsContext)
   if (overrides === null) {
     throw new Error('useFeatureFlag must be used within FeatureFlagsProvider')

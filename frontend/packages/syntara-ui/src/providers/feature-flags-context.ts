@@ -1,5 +1,5 @@
 import { createContext } from 'react'
 
-import type { FeatureFlag } from '../utils/feature-flags'
+import type { FeatureFlagConfig } from '../utils/feature-flags'
 
-export const FeatureFlagsContext = createContext<FeatureFlag | null>(null)
+export const FeatureFlagsContext = createContext<FeatureFlagConfig | null>(null)
