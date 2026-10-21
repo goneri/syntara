@@ -18,6 +18,7 @@ from syntara.authz.models.project import Project
 from syntara.authz.resolver import resolve_effective_policies, resolve_user_groups
 from syntara.authz.role_conventions import builtin_roles_with_system_grant
 from syntara.core.models.group import Group
+from syntara.core.models.user import User
 
 # Precomputed at import time: builtin roles that grant credential:use at system scope.
 # Used by resolve_credential_use_visibility to short-circuit to a single DB query
@@ -658,3 +659,49 @@ async def assign_authenticated_group_project_user(
     )
 
     return assignment
+
+
+async def resolve_service_account_read_ids(
+    db: AsyncSession, evaluator: AuthzEvaluator, user: User
+) -> list[UUID] | None:
+    """Resolve readable identities, including creator access and per-resource denies."""
+    from syntara.service_accounts.models.service_account import ServiceAccount  # noqa: PLC0415
+
+    effective = await resolve_effective_policies(db, user.id, action_filter="service_account:read")
+    groups = await resolve_user_groups(db, user.id)
+    relevant = [
+        p for p in effective if {"service_account:read", "service_account:*"}.intersection(p.get("actions", []))
+    ]
+    if not any(p.get("effect") == "deny" for p in relevant) and any(
+        p.get("effect") == "allow" and p.get("scope") == "any" and not p.get("conditions") for p in relevant
+    ):
+        return None
+
+    candidates = select(ServiceAccount.id, ServiceAccount.created_by, ServiceAccount.labels)
+    # Without a system grant, only creator policies can match these project-less identities.
+    if not any(p.get("effect") == "allow" and p.get("scope") == "any" for p in relevant):
+        candidates = candidates.where(ServiceAccount.created_by == user.id)
+    rows = await db.exec(candidates)
+    readable = []
+    for account_id, created_by, labels in rows.all():
+        result = await _evaluate_authz_policy(
+            evaluator,
+            {
+                "user": {"id": str(user.id), "labels": user.labels, "metadata": user.authz_metadata},
+                "action": "read",
+                "resource": {
+                    "type": "service_account",
+                    "id": str(account_id),
+                    "project": "",
+                    "labels": labels,
+                    "metadata": {"created_by": str(created_by)},
+                },
+                "groups": groups,
+                "effective_policies": effective,
+            },
+            resource_type="service_account",
+            action="read",
+        )
+        if result.get("allow", False):
+            readable.append(account_id)
+    return readable

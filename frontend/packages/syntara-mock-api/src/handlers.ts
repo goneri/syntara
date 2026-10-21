@@ -5037,6 +5037,25 @@ export const handlers = [
 
   // ── Service Accounts ───────────────────────────────────────────────
 
+  http.get('/api/v1/service_accounts/directory', ({ request }) => {
+    const url = new URL(request.url)
+    const limit = Math.min(Number(url.searchParams.get('limit') ?? '20'), 100)
+    const name = url.searchParams.get('name[contains]')?.toLowerCase()
+    const status = url.searchParams.get('status')
+    const cursor = url.searchParams.get('cursor')
+    const results = mockServiceAccounts
+      .filter((sa) => (!name || sa.name.toLowerCase().includes(name)) && (!status || sa.status === status))
+      .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+    const start = cursor ? results.findIndex((sa) => sa.id === cursor) + 1 : 0
+    const page = results.slice(start, start + limit)
+    return HttpResponse.json({
+      resources: page.map(({ id, name, status }) => ({ id, name, status })),
+      next: start + limit < results.length ? page.at(-1)?.id : null,
+      prev: null,
+      ...(url.searchParams.get('include_total') === 'true' ? { total: results.length } : {}),
+    })
+  }),
+
   http.get('/api/v1/service_accounts', ({ request }) => {
     const url = new URL(request.url)
     const limit = Math.min(Number(url.searchParams.get('limit') ?? '20'), 50)
@@ -5049,8 +5068,8 @@ export const handlers = [
     let results = [...mockServiceAccounts]
 
     const username = getUsernameFromRequest(request)
-    if (username === 'project-admin') {
-      results = results.filter((sa) => sa.project_id === 'p-001')
+    if (!['admin', 'auditor', 'demo'].includes(username)) {
+      results = results.filter((sa) => sa.created_by.name === username)
     }
 
     if (nameFilter) results = results.filter((sa) => sa.name.toLowerCase().includes(nameFilter))
@@ -5076,30 +5095,31 @@ export const handlers = [
 
     return HttpResponse.json({
       resources: page,
-      next_cursor: nextCursor,
+      next: nextCursor,
+      prev: null,
       max_lifetime_days: 180,
       ...(includeTotal ? { total: results.length } : {}),
     })
   }),
 
   http.post('/api/v1/service_accounts', async ({ request }) => {
-    const body = (await request.json()) as { name?: string; description?: string | null; project_id?: string } | null
-    if (!body?.name || !body?.project_id) {
-      return HttpResponse.json({ detail: 'name and project_id are required' }, { status: 422 })
+    const body = (await request.json()) as { name?: string; description?: string | null } | null
+    if (!body?.name) {
+      return HttpResponse.json({ detail: 'name is required' }, { status: 422 })
     }
     const id = `sa-new-${uuidv4().slice(0, 8)}`
-    const project = mockProjects.find((p) => p.id === body.project_id)
-    const project_name = project?.name ?? null
 
     const sa = {
       id,
       name: body.name,
       description: body.description ?? null,
       status: 'active' as const,
-      project_id: body.project_id,
-      project_name,
       last_authenticated_at: null,
-      created_by: { id: 'u-001', name: 'alice', type: 'user' as const },
+      created_by: {
+        id: users.find((u) => u.username === getUsernameFromRequest(request))?.id ?? 'u-001',
+        name: getUsernameFromRequest(request),
+        type: 'user' as const,
+      },
       updated_by: null,
       created_at: mockDate.now,
       updated_at: mockDate.now,
@@ -5283,6 +5303,7 @@ export const handlers = [
       resource_type?: string
       check_any_project?: boolean
       resource_project?: string
+      resource_id?: string
     } | null
     const action = (body?.action ?? '').toLowerCase()
     const resourceType = (body?.resource_type ?? '').toLowerCase()
@@ -5324,7 +5345,6 @@ export const handlers = [
       'role-assignment': new Set(['read', 'assign', 'revoke']),
       role: new Set(['read', 'create', 'update', 'delete']),
       policy: new Set(['read', 'create', 'update', 'delete']),
-      service_account: new Set(['read', 'create', 'update', 'delete', 'rotate_secret', 'disable', 'enable']),
       workflow: new Set(['read', 'create', 'update', 'delete']),
       execution: new Set(['read', 'run']),
       credential: new Set(['read', 'create', 'update', 'delete', 'use']),
@@ -5386,6 +5406,16 @@ export const handlers = [
       } else {
         allowed = projectUserGrants[resourceType]?.has(action) ?? false
       }
+    }
+    if (resourceType === 'service-account-directory') allowed = action === 'read'
+    if (resourceType === 'service_account') {
+      const account = mockServiceAccounts.find((sa) => sa.id === body?.resource_id)
+      const ownsAccount = account?.created_by.name === username
+      allowed =
+        action === 'create' ||
+        ownsAccount ||
+        ['admin', 'demo'].includes(username) ||
+        (username === 'auditor' && action === 'read')
     }
     // admin / demo / default: all actions allowed
 

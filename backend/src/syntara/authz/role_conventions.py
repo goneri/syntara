@@ -219,21 +219,21 @@ BUILTIN_POLICIES: list[PolicyInfo] = [
     PolicyInfo("files", "download", scope="project", roles=("project-admin", "project-user", "project-auditor")),
     PolicyInfo("files", "delete", scope="project", roles=("project-admin", "project-user")),
     # -- service accounts --
-    PolicyInfo("service_account", "create", roles=("admin",)),
+    PolicyInfo("service_account", "create", roles=("admin", "authenticated")),
+    PolicyInfo("service-account-directory", "read", roles=("admin", "auditor", "authenticated")),
     PolicyInfo("service_account", "read", roles=("admin", "auditor")),
     PolicyInfo("service_account", "update", roles=("admin",)),
     PolicyInfo("service_account", "delete", roles=("admin",)),
     PolicyInfo("service_account", "rotate_secret", roles=("admin",)),
     PolicyInfo("service_account", "disable", roles=("admin",)),
     PolicyInfo("service_account", "enable", roles=("admin",)),
-    # -- service accounts (project-scoped) --
-    PolicyInfo("service_account", "create", scope="project", roles=("project-admin",)),
-    PolicyInfo("service_account", "read", scope="project", roles=("project-admin", "project-auditor")),
-    PolicyInfo("service_account", "update", scope="project", roles=("project-admin",)),
-    PolicyInfo("service_account", "delete", scope="project", roles=("project-admin",)),
-    PolicyInfo("service_account", "rotate_secret", scope="project", roles=("project-admin",)),
-    PolicyInfo("service_account", "disable", scope="project", roles=("project-admin",)),
-    PolicyInfo("service_account", "enable", scope="project", roles=("project-admin",)),
+    # Creators manage the identity independently of its role assignments.
+    PolicyInfo("service_account", "read", scope="self", roles=("authenticated",)),
+    PolicyInfo("service_account", "update", scope="self", roles=("authenticated",)),
+    PolicyInfo("service_account", "delete", scope="self", roles=("authenticated",)),
+    PolicyInfo("service_account", "rotate_secret", scope="self", roles=("authenticated",)),
+    PolicyInfo("service_account", "disable", scope="self", roles=("authenticated",)),
+    PolicyInfo("service_account", "enable", scope="self", roles=("authenticated",)),
 ]
 
 BUILTIN_ROLES: list[RoleInfo] = [

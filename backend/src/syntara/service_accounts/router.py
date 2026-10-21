@@ -9,14 +9,16 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from syntara.audit.decorators import audit
 from syntara.audit.models.audit_event import EventCategory
 from syntara.auth import get_current_user
-from syntara.authz.dependencies import PermissionChecker, VisibilityFilter
-from syntara.authz.engine import VisibilityResult
+from syntara.authz.dependencies import PermissionChecker, get_authz_evaluator
+from syntara.authz.engine import resolve_service_account_read_ids
+from syntara.authz.evaluator import AuthzEvaluator
 from syntara.core.database.session import get_db
 from syntara.core.models import User
-from syntara.core.syntara_router import SyntaraRouter
+from syntara.core.syntara_router import NO_PERMISSION, SyntaraRouter
 from syntara.service_accounts.models.service_account import ServiceAccount
 from syntara.service_accounts.schemas import (
     ServiceAccountCreate,
+    ServiceAccountDirectoryListResponse,
     ServiceAccountListParams,
     ServiceAccountListResponse,
     ServiceAccountRead,
@@ -26,36 +28,42 @@ from syntara.service_accounts.services.service_account_service import ServiceAcc
 
 router = SyntaraRouter(prefix="/service_accounts", tags=["Service Accounts"])
 
-_sa_create = PermissionChecker("service_account", "create", body_project_field="project_id")
+_sa_create = PermissionChecker("service_account", "create")
+_sa_directory = PermissionChecker("service-account-directory", "read")
 _sa_read = PermissionChecker(
     "service_account",
     "read",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_update = PermissionChecker(
     "service_account",
     "update",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_delete = PermissionChecker(
     "service_account",
     "delete",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_disable = PermissionChecker(
     "service_account",
     "disable",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_enable = PermissionChecker(
     "service_account",
     "enable",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 
 
@@ -94,7 +102,6 @@ async def create_service_account(
     """Create a new service account."""
     service_account = await service.create_service_account(
         name=request.name,
-        project_id=request.project_id,
         description=request.description,
     )
     return await service.to_read(service_account)
@@ -103,6 +110,7 @@ async def create_service_account(
 @router.get(
     "",
     summary="List service accounts",
+    dependencies=[NO_PERMISSION],
     operation_id="list_service_accounts",
     response_description="List of service accounts",
 )
@@ -110,16 +118,38 @@ async def list_service_accounts(
     request: Request,
     service: Annotated[ServiceAccountService, Depends(get_service_account_service)],
     params: Annotated[ServiceAccountListParams, Query()],
-    visibility: Annotated[VisibilityResult, Depends(VisibilityFilter("service_account", "read"))],
+    evaluator: Annotated[AuthzEvaluator, Depends(get_authz_evaluator)],
 ) -> ServiceAccountListResponse:
-    """List service accounts with project-scoped visibility and pagination."""
+    """List service accounts readable by the current user."""
     return await service.list_service_accounts(
         limit=params.limit,
         cursor=params.cursor,
         sort=params.sort,
         query_params_items=request.query_params.items(),
         include_total=params.include_total,
-        allowed_projects=visibility.to_allowed_projects(),
+        id_restriction=await resolve_service_account_read_ids(service.session, evaluator, service.user),
+    )
+
+
+@router.get(
+    "/directory",
+    summary="List service accounts directory",
+    dependencies=[Depends(_sa_directory)],
+    operation_id="list_service_accounts_directory",
+    response_description="Basic service account identities",
+)
+async def list_service_accounts_directory(
+    request: Request,
+    service: Annotated[ServiceAccountService, Depends(get_service_account_service)],
+    params: Annotated[ServiceAccountListParams, Query()],
+) -> ServiceAccountDirectoryListResponse:
+    """Return ID, name, and status for selectors; this grants no management access."""
+    return await service.list_directory(
+        limit=params.limit,
+        cursor=params.cursor,
+        sort=params.sort,
+        query_params_items=request.query_params.items(),
+        include_total=params.include_total,
     )
 
 
@@ -155,7 +185,6 @@ async def update_service_account(
     """Update a service account's name and/or description."""
     service_account = await service.update_service_account(
         service_account_id,
-        project_id=request.project_id,
         name=request.name,
         description=request.description,
     )

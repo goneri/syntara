@@ -476,7 +476,6 @@ async def _create_service_account(
         name=name or f"sa-{uuid4().hex[:8]}",
         client_id=f"nx_sa_{uuid4().hex[:16]}",
         hashed_secret="$argon2id$v=19$m=65536,t=3,p=4$test",  # noqa: S106
-        project_id=project_id,
         created_by=user.id,
     )
     session.add(sa)

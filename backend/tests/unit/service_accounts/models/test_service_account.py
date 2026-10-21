@@ -44,7 +44,6 @@ class TestServiceAccountModel:
             "name",
             "description",
             "status",
-            "project_id",
             "token_version",
             "last_authenticated_at",
             "created_by",
@@ -63,7 +62,6 @@ class TestServiceAccountModel:
     def test_default_status_is_active(self) -> None:
         sa = ServiceAccount(
             name="test",
-            project_id=uuid4(),
             created_by=uuid4(),
         )
         assert sa.status == ServiceAccountStatus.ACTIVE
@@ -71,7 +69,6 @@ class TestServiceAccountModel:
     def test_optional_fields_default_none(self) -> None:
         sa = ServiceAccount(
             name="test",
-            project_id=uuid4(),
             created_by=uuid4(),
         )
         assert sa.last_authenticated_at is None
@@ -85,5 +82,5 @@ class TestServiceAccountAuditConfig:
         assert ServiceAccount.__auditable__ == AuditLevel.META
 
     def test_auditable_fields_include_key_metadata(self) -> None:
-        for field in ("name", "status", "project_id"):
+        for field in ("name", "status"):
             assert field in ServiceAccount.__auditable_fields__

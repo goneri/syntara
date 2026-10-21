@@ -39,20 +39,15 @@ export async function goToServiceAccountDetail(app: Page, sa: { id: string; name
  */
 export async function createServiceAccountViaUI(
   app: Page,
-  options: { name?: string; projectName?: string; description?: string } = {}
+  options: { name?: string; description?: string } = {}
 ): Promise<{ name: string; clientId: string; clientSecret: string }> {
   const name = options.name ?? buildUniqueName('sa-e2e')
-  const projectName = options.projectName ?? 'default'
 
   await goToServiceAccountsList(app)
   await app.getByRole('button', { name: 'Create service account' }).click()
 
   const modal = app.getByRole('dialog')
   await expect(modal).toBeVisible()
-
-  // Select project — menu is portaled to document body (PatternFly default)
-  await modal.getByRole('button', { name: 'Select a project' }).click()
-  await app.getByRole('option', { name: projectName, exact: true }).click()
 
   // Fill name
   await modal.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
@@ -69,10 +64,8 @@ export async function createServiceAccountViaUI(
   await expect(modal.getByText('Service account created')).toBeVisible({ timeout: 15_000 })
   await expect(modal.getByText('Save these credentials now')).toBeVisible()
 
-  // Extract credentials — two readonly textbox inputs in the credential reveal phase
-  const credentialInputs = modal.getByRole('textbox')
-  const clientId = await credentialInputs.nth(0).inputValue()
-  const clientSecret = await credentialInputs.nth(1).inputValue()
+  const clientId = await modal.getByRole('textbox', { name: 'Client ID', exact: true }).inputValue()
+  const clientSecret = await modal.getByRole('textbox', { name: 'Client secret', exact: true }).inputValue()
 
   // Acknowledge and close — scope to footer to avoid matching the modal X button
   await modal.getByLabel('I have saved the credentials').check()

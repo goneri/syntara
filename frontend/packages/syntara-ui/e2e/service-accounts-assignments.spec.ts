@@ -38,6 +38,9 @@ test.describe('UI-10: Cross-Project Role Assignment', () => {
     const modal = app.getByRole('dialog')
     await expect(modal.getByText('Assign roles')).toBeVisible()
 
+    await modal.getByRole('button', { name: 'System', exact: true }).click()
+    await app.getByRole('option', { name: 'Project', exact: true }).click()
+
     // Select a project from the project dropdown
     await modal.getByRole('button', { name: 'Select a project...' }).click()
     const defaultOption = app.getByRole('option', { name: 'default' })

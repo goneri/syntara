@@ -284,7 +284,7 @@ describe('ServiceAccountSelect', () => {
     expect(screen.queryByText('No service accounts available')).not.toBeInTheDocument()
   })
 
-  it('shows SA description when available', async () => {
+  it('uses only directory identities in options', async () => {
     setupMocks()
     const user = userEvent.setup()
 
@@ -292,7 +292,7 @@ describe('ServiceAccountSelect', () => {
 
     await user.click(screen.getByText('Select service accounts'))
 
-    expect(screen.getByText('CI integration')).toBeInTheDocument()
+    expect(screen.queryByText('CI integration')).not.toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {

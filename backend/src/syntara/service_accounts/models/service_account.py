@@ -51,12 +51,6 @@ class ServiceAccount(NamedResource, UserOwnedResource, table=True):
         index=True,
     )
 
-    project_id: UUID = Field(
-        foreign_key="projects.id",
-        description="Project namespace for resource isolation",
-        index=True,
-    )
-
     token_version: int = Field(
         default=0,
         sa_column_kwargs={"server_default": text("0")},
@@ -86,7 +80,6 @@ class ServiceAccount(NamedResource, UserOwnedResource, table=True):
                 *NamedResource.__filterable_fields__,
                 *UserOwnedResource.__filterable_fields__,
                 "status",
-                "project_id",
                 "last_authenticated_at",
             ]
         )
@@ -107,7 +100,6 @@ class ServiceAccount(NamedResource, UserOwnedResource, table=True):
         "name",
         "description",
         "status",
-        "project_id",
         "token_version",
         "last_authenticated_at",
         "created_by",

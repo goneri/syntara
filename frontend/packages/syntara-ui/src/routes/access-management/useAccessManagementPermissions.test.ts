@@ -134,10 +134,8 @@ describe('useAccessManagementPermissions', () => {
     expect(result.current.canAccessPage).toBe(false)
   })
 
-  it('does not grant canAccessPage for project-scoped service_account:read alone', async () => {
-    mockCanIByBody(
-      (body) => body.check_any_project === true && body.resource_type === 'service_account' && body.action === 'read'
-    )
+  it('lets ordinary users manage their own service accounts', async () => {
+    mockCanIByBody((body) => body.resource_type === 'service_account' && body.action === 'create')
 
     const { result } = renderHook(() => useAccessManagementPermissions(), { wrapper: createWrapper() })
 
@@ -145,7 +143,7 @@ describe('useAccessManagementPermissions', () => {
       expect(result.current.isLoading).toBe(false)
     })
     expect(result.current.canReadServiceAccounts).toBe(true)
-    expect(result.current.canAccessPage).toBe(false)
+    expect(result.current.canAccessPage).toBe(true)
   })
 
   it('handles mixed permissions — canAccessPage true when role-assignment is granted', async () => {
@@ -190,7 +188,7 @@ describe('useAccessManagementPermissions', () => {
       body: { action: 'assign', resource_type: 'role-assignment', check_any_project: true },
     })
     expect(accessFetchClient.POST).toHaveBeenCalledWith('/authz/can_i', {
-      body: { action: 'read', resource_type: 'service_account', check_any_project: true },
+      body: { action: 'create', resource_type: 'service_account' },
     })
     expect(accessFetchClient.POST).toHaveBeenCalledWith('/authz/can_i', {
       body: { action: 'read', resource_type: 'service_account' },

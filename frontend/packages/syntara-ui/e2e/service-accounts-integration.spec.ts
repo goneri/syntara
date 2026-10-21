@@ -1,8 +1,8 @@
 /**
- * E2E Tests: Service Accounts — Integration (Project-Scoped Access)
+ * E2E Tests: Service Accounts — Integration (Creator Access)
  *
  * Test cases covered:
- * - Project admin manages service accounts within their own project
+ * - Creators manage identities independently of project grants
  */
 import { test, expect } from './fixtures'
 import {
@@ -13,31 +13,32 @@ import {
 } from './helpers/service-accounts'
 import { buildUniqueName } from './helpers/workflows'
 import { isSkipWebServerForPlaywrightTests } from './playwrightWebServerEnv'
-import { apiRequest, ensureProject } from './utils/api'
+import { apiRequest } from './utils/api'
 
 const isRealBackend = isSkipWebServerForPlaywrightTests()
 
-test.describe('Project Admin — Manage Service Accounts in Own Project', () => {
+test.describe('Creator-owned service accounts', () => {
   test.skip(isRealBackend, 'project-admin is a mock-only role with no real backend equivalent')
-  test('project admin can only see SAs from their own project', async ({ app, projectAdminApp }) => {
+  test('project admin sees accounts they created', async ({ app, projectAdminApp }) => {
     const otherProjectSaName = buildUniqueName('sa-other-proj')
     const ownProjectSaName = buildUniqueName('sa-own-proj')
     let otherSaId: string | undefined
     let ownSaId: string | undefined
 
     try {
-      // Admin creates an SA in alice-sandbox (p-002) — NOT project-admin's project
-      const otherProject = await ensureProject(app, 'alice-sandbox')
+      // Another human creates an account.
+
       const otherResp = await apiRequest(app, 'post', '/service_accounts', {
-        data: { name: otherProjectSaName, description: 'Cross-project isolation test', project_id: otherProject!.id },
+        data: { name: otherProjectSaName, description: 'Unrelated identity' },
       })
       const otherSa = (await otherResp.json()) as { id: string }
       otherSaId = otherSa.id
 
-      // Admin creates an SA in default (p-001) — project-admin's project
-      const ownProject = await ensureProject(app, 'default')
-      const ownResp = await apiRequest(app, 'post', '/service_accounts', {
-        data: { name: ownProjectSaName, description: 'Own project SA', project_id: ownProject!.id },
+      // The current human creates an account.
+
+      const ownResp = await apiRequest(projectAdminApp, 'post', '/service_accounts', {
+        token: 'mock-token-project-admin',
+        data: { name: ownProjectSaName, description: 'Own identity' },
       })
       const ownSa = (await ownResp.json()) as { id: string }
       ownSaId = ownSa.id
@@ -45,7 +46,7 @@ test.describe('Project Admin — Manage Service Accounts in Own Project', () => 
       // Project admin navigates to SA list
       await goToServiceAccountsList(projectAdminApp)
 
-      // Project admin can see the SA from their own project
+      // The creator can see their own account.
       await filterServiceAccountByName(projectAdminApp, ownProjectSaName)
       await expect(projectAdminApp.getByRole('row', { name: new RegExp(ownProjectSaName) })).toBeVisible()
 
@@ -70,10 +71,11 @@ test.describe('Project Admin — Manage Service Accounts in Own Project', () => 
       await expect(createButton).toBeVisible()
       await expect(createButton).not.toHaveAttribute('aria-disabled', 'true')
 
-      // Create via API (mock project IDs aren't UUIDs so UI form validation rejects them)
-      const project = await ensureProject(app, 'default')
-      const resp = await apiRequest(app, 'post', '/service_accounts', {
-        data: { name: saName, description: 'Created for project-admin', project_id: project!.id },
+      // Create with the same signed-in user who will manage the account.
+
+      const resp = await apiRequest(projectAdminApp, 'post', '/service_accounts', {
+        token: 'mock-token-project-admin',
+        data: { name: saName, description: 'Created for project-admin' },
       })
       const sa = (await resp.json()) as { id: string }
       saId = sa.id
@@ -93,10 +95,11 @@ test.describe('Project Admin — Manage Service Accounts in Own Project', () => 
     let saId: string | undefined
 
     try {
-      // Admin creates an SA in the project-admin's project (default / p-001)
-      const project = await ensureProject(app, 'default')
-      const resp = await apiRequest(app, 'post', '/service_accounts', {
-        data: { name: originalName, description: 'SA for edit test', project_id: project!.id },
+      // Create as the user who will edit the account.
+
+      const resp = await apiRequest(projectAdminApp, 'post', '/service_accounts', {
+        token: 'mock-token-project-admin',
+        data: { name: originalName, description: 'SA for edit test' },
       })
       const sa = (await resp.json()) as { id: string; name: string }
       saId = sa.id
@@ -129,10 +132,11 @@ test.describe('Project Admin — Manage Service Accounts in Own Project', () => 
     let saId: string | undefined
 
     try {
-      // Admin creates an active SA in the project-admin's project
-      const project = await ensureProject(app, 'default')
-      const resp = await apiRequest(app, 'post', '/service_accounts', {
-        data: { name: saName, description: 'SA for disable test', project_id: project!.id },
+      // Create an active account as its creator.
+
+      const resp = await apiRequest(projectAdminApp, 'post', '/service_accounts', {
+        token: 'mock-token-project-admin',
+        data: { name: saName, description: 'SA for disable test' },
       })
       const sa = (await resp.json()) as { id: string; name: string }
       saId = sa.id

@@ -42,7 +42,7 @@ function setupMocks(overrides?: { saReject?: boolean; credReject?: boolean }) {
   return { createSA, createCred }
 }
 
-const formData = { name: 'test-sa', description: '', project_id: '00000000-0000-0000-0000-000000000001' }
+const formData = { name: 'test-sa', description: '' }
 const handleError = (() => vi.fn()) as ReturnType<
   typeof import('../../../hooks/useFormMutationErrorHandler').useFormMutationErrorHandler
 >
@@ -72,7 +72,7 @@ describe('useCreateServiceAccountInline', () => {
     })
 
     expect(createSA).toHaveBeenCalledWith({
-      body: { name: 'test-sa', description: '', project_id: '00000000-0000-0000-0000-000000000001' },
+      body: { name: 'test-sa', description: '' },
     })
     expect(createCred).toHaveBeenCalledWith({
       params: { path: { service_account_id: 'new-sa-id' } },
@@ -183,14 +183,14 @@ describe('useCreateServiceAccountInline', () => {
     const { createSA } = setupMocks()
     const { result } = renderHook(() => useCreateServiceAccountInline('2026-12-31'), { wrapper })
 
-    const dataWithNoDesc = { name: 'test-sa', project_id: '00000000-0000-0000-0000-000000000001' } as typeof formData
+    const dataWithNoDesc = { name: 'test-sa' } as typeof formData
 
     await act(async () => {
       await result.current.submitForm(dataWithNoDesc, handleError)
     })
 
     expect(createSA).toHaveBeenCalledWith({
-      body: { name: 'test-sa', description: undefined, project_id: '00000000-0000-0000-0000-000000000001' },
+      body: { name: 'test-sa', description: undefined },
     })
   })
 

@@ -35,36 +35,42 @@ _sa_read = PermissionChecker(
     "read",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_update = PermissionChecker(
     "service_account",
     "update",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_delete = PermissionChecker(
     "service_account",
     "delete",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_rotate_secret = PermissionChecker(
     "service_account",
     "rotate_secret",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_disable = PermissionChecker(
     "service_account",
     "disable",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 _sa_enable = PermissionChecker(
     "service_account",
     "enable",
     resource_model=ServiceAccount,
     resource_id_param="service_account_id",
+    owner_field="created_by",
 )
 
 

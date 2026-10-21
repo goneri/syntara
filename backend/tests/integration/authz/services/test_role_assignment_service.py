@@ -810,7 +810,6 @@ async def test_list_sort_by_principal_name_global_order(seeded_db: AsyncSession,
 
 async def _create_service_account(
     session: AsyncSession,
-    project: Project,
     created_by: UUID,
     name: str | None = None,
 ) -> ServiceAccount:
@@ -820,7 +819,6 @@ async def _create_service_account(
         name=name or f"sa-{uuid4().hex[:8]}",
         client_id=f"nx_sa_{uuid4().hex[:16]}",
         hashed_secret="$argon2id$v=19$m=65536,t=3,p=4$test",  # noqa: S106
-        project_id=project.id,
         created_by=created_by,
     )
     session.add(sa)
@@ -835,7 +833,7 @@ async def test_assign_service_account_role_project_scoped(
 ) -> None:
     """Assign a project role to a service account."""
     project = await _create_project(seeded_db, name="sa-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id)
+    sa = await _create_service_account(seeded_db, created_by=test_user.id)
     if role_name == "custom-project":
         await _create_custom_role(seeded_db, name=role_name, scope="project", project_id=project.id)
     svc = RoleAssignmentService(seeded_db, test_user)
@@ -852,52 +850,41 @@ async def test_assign_service_account_role_project_scoped(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role_name", ["admin", "auditor", "custom-system"])
-async def test_assign_service_account_global_role_rejected(
-    seeded_db: AsyncSession, test_user: User, role_name: str
-) -> None:
-    """A service account cannot receive any system role globally."""
-    project = await _create_project(seeded_db)
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id)
+async def test_assign_service_account_system_role(seeded_db: AsyncSession, test_user: User, role_name: str) -> None:
+    """Explicit system grants, including administrator, are supported."""
+    account = await _create_service_account(seeded_db, created_by=test_user.id)
     if role_name == "custom-system":
         await _create_custom_role(seeded_db, name=role_name)
-    svc = RoleAssignmentService(seeded_db, test_user)
-
-    with (
-        patch.object(AuditEventDispatcher, "dispatch") as dispatch,
-        pytest.raises(SafeValueError, match="Service accounts can only be assigned roles within their owning project"),
-    ):
-        await svc.assign(principal_id=sa.id, role_name=role_name)
-
-    assert (await svc.list(principal_id=sa.id))["resources"] == []
-    dispatch.assert_not_called()
+    service = RoleAssignmentService(seeded_db, test_user)
+    assignment = await service.assign(principal_id=account.id, role_name=role_name)
+    assert assignment["project_id"] is None
+    assert assignment["role_name"] == role_name
+    await service.revoke(assignment["id"])
+    assert (await service.list(principal_id=account.id))["resources"] == []
 
 
 @pytest.mark.asyncio
-async def test_assign_service_account_other_project_rejected(seeded_db: AsyncSession, test_user: User) -> None:
-    """A valid role in another project cannot be granted to the service account."""
-    project = await _create_project(seeded_db, name="owning-project")
-    other_project = await _create_project(seeded_db, name="other-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id)
-    svc = RoleAssignmentService(seeded_db, test_user)
-
-    with (
-        patch.object(AuditEventDispatcher, "dispatch") as dispatch,
-        pytest.raises(SafeValueError, match="Service accounts can only be assigned roles within their owning project"),
-    ):
-        await svc.assign(principal_id=sa.id, role_name="project-user", project_id=other_project.id)
-
-    assert (await svc.list(principal_id=sa.id))["resources"] == []
-    dispatch.assert_not_called()
+async def test_assign_service_account_roles_in_two_projects(seeded_db: AsyncSession, test_user: User) -> None:
+    project = await _create_project(seeded_db, name="first-project")
+    other = await _create_project(seeded_db, name="second-project")
+    account = await _create_service_account(seeded_db, created_by=test_user.id)
+    service = RoleAssignmentService(seeded_db, test_user)
+    for project_id in (project.id, other.id):
+        await service.assign(principal_id=account.id, role_name="project-user", project_id=project_id)
+    assert {row["project_id"] for row in (await service.list(principal_id=account.id))["resources"]} == {
+        project.id,
+        other.id,
+    }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role_name", ["admin", "auditor", "custom-system"])
-async def test_assign_service_account_system_role_in_owning_project_rejected(
+async def test_assign_service_account_system_role_at_project_scope_rejected(
     seeded_db: AsyncSession, test_user: User, role_name: str
 ) -> None:
-    """Matching the owning project does not make a system role valid."""
+    """System roles still require system scope."""
     project = await _create_project(seeded_db)
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id)
+    sa = await _create_service_account(seeded_db, created_by=test_user.id)
     if role_name == "custom-system":
         await _create_custom_role(seeded_db, name=role_name)
     svc = RoleAssignmentService(seeded_db, test_user)
@@ -928,7 +915,7 @@ async def test_assign_nonexistent_service_account(seeded_db: AsyncSession, test_
 async def test_get_service_account_assignment(seeded_db: AsyncSession, test_user: User) -> None:
     """Get resolves service account principal_name via _query_one."""
     project = await _create_project(seeded_db, name="sa-get-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="my-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="my-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
     created = await svc.assign(
         principal_id=sa.id,
@@ -943,7 +930,7 @@ async def test_get_service_account_assignment(seeded_db: AsyncSession, test_user
 async def test_list_includes_service_account_assignments(seeded_db: AsyncSession, test_user: User) -> None:
     """List returns service account assignments with resolved principal_name."""
     project = await _create_project(seeded_db, name="sa-list-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="list-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="list-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
     await svc.assign(
         principal_id=sa.id,
@@ -961,7 +948,7 @@ async def test_list_includes_service_account_assignments(seeded_db: AsyncSession
 async def test_list_restrict_user_id_sees_own_service_account(seeded_db: AsyncSession, test_user: User) -> None:
     """Restricting by restrict_user_id returns SA assignments when principal_id matches."""
     project = await _create_project(seeded_db, name="sa-visibility-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id)
+    sa = await _create_service_account(seeded_db, created_by=test_user.id)
     svc = RoleAssignmentService(seeded_db, test_user)
     await svc.assign(
         principal_id=sa.id,
@@ -1018,7 +1005,7 @@ async def test_assign_service_account_returns_principal_type_service_account(
 ) -> None:
     """Service account assignment returns principal_type='service_account'."""
     project = await _create_project(seeded_db, name="pt-sa-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="pt-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="pt-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
     result = await svc.assign(principal_id=sa.id, role_name="project-user", project_id=project.id)
     assert result["principal_type"] == "service_account"
@@ -1038,7 +1025,7 @@ async def test_list_returns_principal_type_for_all_types(seeded_db: AsyncSession
     """List returns correct principal_type for user, group, and service account."""
     group = await _create_group(seeded_db, name="pt-list-group")
     project = await _create_project(seeded_db, name="pt-list-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="pt-list-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="pt-list-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
 
     await svc.assign(principal_id=test_user.id, role_name="admin")
@@ -1238,7 +1225,7 @@ async def test_list_sort_by_principal_type(seeded_db: AsyncSession, test_user: U
     """Sort by principal_type returns assignments in alphabetical order of type."""
     group = await _create_group(seeded_db, name="pt-sort-group")
     project = await _create_project(seeded_db, name="pt-sort-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="pt-sort-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="pt-sort-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
 
     await svc.assign(principal_id=test_user.id, role_name="admin")
@@ -1255,7 +1242,7 @@ async def test_list_sort_by_principal_type_descending(seeded_db: AsyncSession, t
     """Sort by -principal_type returns assignments in reverse alphabetical order."""
     group = await _create_group(seeded_db, name="pt-sort-desc-group")
     project = await _create_project(seeded_db, name="pt-sort-desc-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="pt-sort-desc-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="pt-sort-desc-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
 
     await svc.assign(principal_id=test_user.id, role_name="admin")
@@ -1305,7 +1292,7 @@ async def test_list_filter_by_principal_type_group(seeded_db: AsyncSession, test
 async def test_list_filter_by_principal_type_service_account(seeded_db: AsyncSession, test_user: User) -> None:
     """Filter by principal_type=service_account returns only service account assignments."""
     project = await _create_project(seeded_db, name="pt-filter-sa-project")
-    sa = await _create_service_account(seeded_db, project, created_by=test_user.id, name="pt-filter-sa")
+    sa = await _create_service_account(seeded_db, created_by=test_user.id, name="pt-filter-sa")
     svc = RoleAssignmentService(seeded_db, test_user)
 
     await svc.assign(principal_id=test_user.id, role_name="admin")

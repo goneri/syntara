@@ -602,8 +602,6 @@ export interface MockServiceAccount {
   name: string
   description: string | null
   status: ServiceAccountStatus
-  project_id: string
-  project_name: string | null
   last_authenticated_at: string | null
   created_by: { id: string; name: string; type: 'user' | 'service_account' | 'service' | 'system' | 'deleted_user' }
   updated_by: {
@@ -622,8 +620,6 @@ export const mockServiceAccounts: MockServiceAccount[] = [
     name: 'ci-pipeline',
     description: 'CI/CD pipeline service account for automated deployments',
     status: 'active',
-    project_id: 'p-001',
-    project_name: 'default',
     last_authenticated_at: mockDate.hoursAgo2,
     created_by: { id: 'u-001', name: 'alice', type: 'user' as const },
     updated_by: null,
@@ -636,8 +632,6 @@ export const mockServiceAccounts: MockServiceAccount[] = [
     name: 'monitoring-agent',
     description: 'Monitoring and observability agent',
     status: 'active',
-    project_id: 'p-001',
-    project_name: 'default',
     last_authenticated_at: mockDate.minutesAgo30,
     created_by: { id: 'u-001', name: 'alice', type: 'user' as const },
     updated_by: null,
@@ -650,8 +644,6 @@ export const mockServiceAccounts: MockServiceAccount[] = [
     name: 'backup-agent',
     description: 'Automated backup service',
     status: 'disabled',
-    project_id: 'p-002',
-    project_name: 'alice-sandbox',
     last_authenticated_at: mockDate.daysAgo5,
     created_by: { id: 'u-002', name: 'bob', type: 'user' as const },
     updated_by: { id: 'u-001', name: 'alice', type: 'user' as const },
@@ -664,8 +656,6 @@ export const mockServiceAccounts: MockServiceAccount[] = [
     name: 'api-gateway',
     description: null,
     status: 'active',
-    project_id: 'p-002',
-    project_name: 'alice-sandbox',
     last_authenticated_at: null,
     created_by: { id: 'u-001', name: 'alice', type: 'user' as const },
     updated_by: null,
@@ -678,8 +668,6 @@ export const mockServiceAccounts: MockServiceAccount[] = [
     name: 'legacy-sync',
     description: 'Legacy inventory sync agent',
     status: 'disabled',
-    project_id: 'p-002',
-    project_name: 'alice-sandbox',
     last_authenticated_at: mockDate.daysAgo5,
     created_by: { id: 'u-002', name: 'bob', type: 'user' as const },
     updated_by: null,
