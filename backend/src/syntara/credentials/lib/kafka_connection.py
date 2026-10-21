@@ -2,14 +2,24 @@
 
 The credential stores only the SASL username and password. Connection settings
 stay on the Kafka integration. This module decides when that credential is
-required and resolves the login from the credential the caller supplied.
+required and loads the login from the credential id the caller supplied.
 """
 
 from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from syntara.credentials.exceptions import CredentialValidationError
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from syntara.core.lib.encryption import EncryptionError
+from syntara.core.services.secret_service import SecretService
+from syntara.credentials.exceptions import (
+    CredentialDecryptionError,
+    CredentialDisabledError,
+    CredentialValidationError,
+)
+from syntara.credentials.models.credential import Credential
+from syntara.credentials.models.credential_type import CredentialType
 
 KAFKA_CONNECTION_TYPE_NAME = "Kafka"
 KAFKA_USERNAME_KEY = "kafka_username"
@@ -73,9 +83,98 @@ def resolve_supplied_kafka_login(
         msg = "Kafka credential inputs were not supplied for the requested credential"
         raise CredentialValidationError(msg)
 
-    username = str(decrypted_inputs.get("username") or "").strip()
-    password = str(decrypted_inputs.get("password") or "").strip()
-    if not username or not password:
+    username_value = decrypted_inputs.get("username")
+    password_value = decrypted_inputs.get("password")
+    username = username_value.strip() if isinstance(username_value, str) else ""
+    # Blank-check with strip(), but return the stored password unchanged.
+    # A password may intentionally start or end with whitespace.
+    password = password_value if isinstance(password_value, str) else ""
+    if not username or not password.strip():
         msg = "Kafka SASL username and password are required"
         raise CredentialValidationError(msg)
     return {KAFKA_USERNAME_KEY: username, KAFKA_PASSWORD_KEY: password}
+
+
+async def _load_supplied_kafka_login(
+    session: AsyncSession,
+    secret_service: SecretService,
+    *,
+    credential_id: UUID | None,
+    security_protocol: str,
+) -> dict[str, str] | None:
+    """Load one credential id, decrypt it, and apply the Kafka login rules.
+
+    There is no second id. Connector validation passes its management
+    credential. Listener runtime passes its step-selected credential.
+    A missing runtime id is not replaced with the management credential.
+    """
+    required = kafka_credential_required(security_protocol)
+    if credential_id is None:
+        if required:
+            msg = "SASL_SSL requires a Kafka credential"
+            raise CredentialValidationError(msg)
+        return None
+
+    credential = await session.get(Credential, credential_id)
+    if credential is None or credential.secret_id is None:
+        msg = "Kafka credential inputs were not supplied for the requested credential"
+        raise CredentialValidationError(msg)
+    if not credential.enabled:
+        raise CredentialDisabledError(credential.name)
+
+    cred_type = await session.get(CredentialType, credential.credential_type_id)
+    if cred_type is None or cred_type.name != KAFKA_CONNECTION_TYPE_NAME:
+        msg = "The supplied credential is not a Kafka credential"
+        raise CredentialValidationError(msg)
+
+    try:
+        decrypted_inputs = await secret_service.retrieve_secret(credential.secret_id)
+    except EncryptionError as exc:
+        msg = "Kafka credential could not be decrypted"
+        raise CredentialDecryptionError(msg) from exc
+
+    return resolve_supplied_kafka_login(
+        credential_id=credential_id,
+        decrypted_inputs=decrypted_inputs,
+        security_protocol=security_protocol,
+    )
+
+
+async def resolve_connector_kafka_login(
+    session: AsyncSession,
+    secret_service: SecretService,
+    *,
+    management_credential_id: UUID | None,
+    security_protocol: str,
+) -> dict[str, str] | None:
+    """Resolve the Kafka login for connector validation.
+
+    The id is the integration's management credential. This does not read
+    any other credential.
+    """
+    return await _load_supplied_kafka_login(
+        session,
+        secret_service,
+        credential_id=management_credential_id,
+        security_protocol=security_protocol,
+    )
+
+
+async def resolve_listener_kafka_login(
+    session: AsyncSession,
+    secret_service: SecretService,
+    *,
+    runtime_credential_id: UUID | None,
+    security_protocol: str,
+) -> dict[str, str] | None:
+    """Resolve the Kafka login for listener runtime.
+
+    The id is the credential selected on the listener step. This function
+    has no management-credential parameter, so it cannot substitute one.
+    """
+    return await _load_supplied_kafka_login(
+        session,
+        secret_service,
+        credential_id=runtime_credential_id,
+        security_protocol=security_protocol,
+    )

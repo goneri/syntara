@@ -21,8 +21,13 @@ from syntara.core.services import BaseService
 from syntara.core.services.extensions import ConvertResourceMixin
 from syntara.core.services.secret_service import SecretService
 from syntara.core.services.user_reference_resolution import UserReferenceResolverMixin
-from syntara.credentials.exceptions import CredentialDisabledError
+from syntara.credentials.exceptions import CredentialDisabledError, CredentialValidationError
 from syntara.credentials.lib.injector_resolver import InjectorResolver
+from syntara.credentials.lib.kafka_connection import (
+    KAFKA_CONNECTION_TYPE_NAME,
+    KafkaSecurityProtocol,
+    resolve_connector_kafka_login,
+)
 from syntara.integrations.adapters.factory import create_health_check_adapter
 from syntara.integrations.adapters.protocol import (
     DiscoveredLLMModel,
@@ -712,16 +717,26 @@ class IntegrationService(UserReferenceResolverMixin, BaseService):
             RuntimeError: If SecretService is not available.
 
         """
-        if self._secret_service is None:
+        secret_service = self._secret_service
+        if secret_service is None:
             msg = "SecretService is required for credential resolution"
             raise RuntimeError(msg)
 
         credential, cred_type = await fetch_credential_with_type(self.session, credential_id)
         if not credential.enabled:
             raise CredentialDisabledError(credential.name)
+        if cred_type.name == KAFKA_CONNECTION_TYPE_NAME:
+            logger.debug("Resolving Kafka management credential", credential_id=str(credential_id))
+            login = await resolve_connector_kafka_login(
+                self.session,
+                secret_service,
+                management_credential_id=credential_id,
+                security_protocol=KafkaSecurityProtocol.SASL_SSL,
+            )
+            return dict(login or {})
         logger.debug("Resolving credential", credential_id=str(credential_id), credential_type=cred_type.name)
         # fetch_credential_with_type raises if secret_id is None
-        decrypted_inputs = await self._secret_service.retrieve_secret(credential.secret_id)  # type: ignore[arg-type]
+        decrypted_inputs = await secret_service.retrieve_secret(credential.secret_id)  # type: ignore[arg-type]
         resolved = InjectorResolver.resolve(cred_type.injectors or {}, decrypted_inputs)
         return resolved.extra_vars
 
@@ -849,7 +864,7 @@ class IntegrationService(UserReferenceResolverMixin, BaseService):
         if integration.management_credential_id:
             try:
                 resolved_credential = await self._resolve_credential(integration.management_credential_id)
-            except CredentialDisabledError as exc:
+            except (CredentialDisabledError, CredentialValidationError) as exc:
                 await self._fail_validation(integration, exc)
 
         integration.validation_status = IntegrationStatus.VALIDATING
