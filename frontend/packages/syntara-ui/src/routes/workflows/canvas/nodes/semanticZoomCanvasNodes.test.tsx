@@ -68,6 +68,7 @@ import { GenericNodeComponent, type GenericNode } from './GenericNode'
 import { LoopNodeComponent, type LoopNode } from './LoopNode'
 import { SwitchNodeComponent, type SwitchNode } from './SwitchNode'
 import { TaskNodeComponent, type TaskNode } from './TaskNode'
+import { TaskReversedNodeComponent, type TaskReversedNode } from './TaskReversedNode'
 import { TriggerNodeComponent, type TriggerNode } from './TriggerNode'
 import { WaitNodeComponent, type WaitNode } from './WaitNode'
 
@@ -176,7 +177,10 @@ describe('canvas nodes at semantic zoom', () => {
       type: 'switch',
       name: 'Route by status',
       parameters: {
-        cases: [{ port: buildSwitchCasePort(0), label: 'Approved', condition: '${x}' }],
+        cases: [
+          { port: buildSwitchCasePort(0), label: 'Approved', condition: '${x}' },
+          { port: buildSwitchCasePort(1), condition: '${y}' },
+        ],
         default_port: EdgeHandleEnum.DEFAULT,
       },
     } as SwitchActivity
@@ -240,6 +244,25 @@ describe('canvas nodes at semantic zoom', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Incoming hook, Webhook trigger' })).toBeInTheDocument()
+  })
+
+  it('renders reversed task node at semantic zoom', () => {
+    const data = {
+      id: 'task-rev-1',
+      type: ExecutorTypeEnum.SCRIPT,
+      name: 'Loop body',
+      parameters: { language: 'python', code: 'x' },
+    } as TaskActivity
+
+    render(
+      <ReactFlowProvider>
+        <TaskReversedNodeComponent
+          {...castNodeProps<TaskReversedNode>(canvasNodeProps(data, FlowNodeType.TASK_REVERSED, data.id))}
+        />
+      </ReactFlowProvider>
+    )
+
+    expect(screen.getByRole('button', { name: 'Loop body, Script' })).toBeInTheDocument()
   })
 
   it('renders converge node at semantic zoom', () => {
