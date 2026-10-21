@@ -32,17 +32,18 @@ test.describe('Stall detection builder and accessibility', () => {
 
     try {
       // Navigate to builder and run workflow
-      await app.goto(toAppUrl(`/builder/${id}`))
+      await app.goto(toAppUrl(`/workflow-builder/${id}`))
       await waitForUIReady(app)
 
       // Run workflow and capture execution detail URL
       const executionUrl = await runWorkflowFromBuilderAndCaptureUrl(app)
+      await waitForUIReady(app)
 
       // Wait for stall detection
       await waitForActivityStallWarning(app, 'Activity 1', 30_000)
 
       // Navigate back to builder to test execution panel
-      await app.goto(toAppUrl(`/builder/${id}`))
+      await app.goto(toAppUrl(`/workflow-builder/${id}`))
       await waitForUIReady(app)
 
       // Open execution detail panel (click on execution in history list)
