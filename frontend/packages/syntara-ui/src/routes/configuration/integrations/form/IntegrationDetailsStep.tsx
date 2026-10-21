@@ -193,7 +193,12 @@ function ProviderHintSelect({
 function SecurityFields({
   control,
   allowHttpDescription = 'Permits unencrypted HTTP URLs for this integration',
-}: Readonly<{ control: Control<IntegrationFormData>; allowHttpDescription?: string }>) {
+  showAllowHttp = true,
+}: Readonly<{
+  control: Control<IntegrationFormData>
+  allowHttpDescription?: string
+  showAllowHttp?: boolean
+}>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const skipTlsVerify = useWatch({ control, name: 'configuration.insecure_skip_tls_verify' })
 
@@ -205,19 +210,21 @@ function SecurityFields({
       isIndented
     >
       <div className={styles.securityFields}>
-        <Controller
-          name="configuration.allow_http"
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              id="allow-http"
-              label="Allow HTTP connections"
-              description={allowHttpDescription}
-              isChecked={field.value}
-              onChange={(_event, checked) => field.onChange(checked)}
-            />
-          )}
-        />
+        {showAllowHttp && (
+          <Controller
+            name="configuration.allow_http"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id="allow-http"
+                label="Allow HTTP connections"
+                description={allowHttpDescription}
+                isChecked={field.value}
+                onChange={(_event, checked) => field.onChange(checked)}
+              />
+            )}
+          />
+        )}
         <Controller
           name="configuration.insecure_skip_tls_verify"
           control={control}
@@ -494,14 +501,7 @@ export function IntegrationDetailsStep({ control, setValue, onTypeChange }: Inte
           <KafkaSaslMechanismField control={control} name="configuration.sasl_mechanism" fieldId="sasl-mechanism" />
         )}
 
-        <SecurityFields
-          control={control}
-          allowHttpDescription={
-            isKafka
-              ? 'Permits an unencrypted SASL connection (SASL_PLAINTEXT). Leave this off to use SASL_SSL.'
-              : undefined
-          }
-        />
+        <SecurityFields control={control} showAllowHttp={!isKafka} />
 
         <ScopeFields
           control={control}
