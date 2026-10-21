@@ -95,9 +95,9 @@ async def _test_multi_approval_activity(
 async def _test_registered_approval(request: dict[str, Any]) -> dict[str, Any]:
     """Use controlled handlers for time-skipping tests of the new dispatch path."""
     inputs = request["input"]
-    if request["name"] == "approval.expire":
+    if request["name"] == "approval.request" and request.get("operation") == "expire":
         return await _test_expire_approval_activity(request["execution_id"], inputs.get("node_id"))
-    if request["name"] == "approval.cancel":
+    if request["name"] == "approval.request" and request.get("operation") == "cancel":
         return {"output": {"cancelled_count": 0}}
     handler = (
         _test_multi_approval_activity

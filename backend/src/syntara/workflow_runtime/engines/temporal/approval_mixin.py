@@ -160,12 +160,13 @@ class WorkflowApprovalMixin:
         """
         return approval_temporal_activity_id(node_id, self.loop_body_map, self.node_control_data)
 
-    def _registered_approval(self, name: str, inputs: dict[str, Any]) -> list[Any]:
-        """Build a pinned, serializable invocation without discovering handlers in replay."""
+    def _registered_approval(self, name: str, inputs: dict[str, Any], *, operation: str = "execute") -> list[Any]:
+        """Build a pinned invocation without discovering handlers in workflow replay."""
         return [
             {
                 "name": name,
                 "version": 1,
+                "operation": operation,
                 "input": inputs,
                 "execution_id": self.execution_id,
                 "project_id": self._project_id,
@@ -181,7 +182,7 @@ class WorkflowApprovalMixin:
         try:
             await workflow.execute_activity(
                 "execute_registered_activity_v1",
-                args=self._registered_approval("approval.expire", {"node_id": node_id}),
+                args=self._registered_approval("approval.request", {"node_id": node_id}, operation="expire"),
                 activity_id=activity_id,
                 start_to_close_timeout=timedelta(seconds=DEFAULT_ACTIVITY_TIMEOUT_SECONDS),
                 retry_policy=RetryPolicy(maximum_attempts=1),
@@ -262,7 +263,7 @@ class WorkflowApprovalMixin:
             await asyncio.shield(
                 workflow.execute_activity(
                     "execute_registered_activity_v1",
-                    args=self._registered_approval("approval.cancel", {}),
+                    args=self._registered_approval("approval.request", {}, operation="cancel"),
                     activity_id="__internal__cancel_approvals",
                     start_to_close_timeout=timedelta(seconds=DEFAULT_ACTIVITY_TIMEOUT_SECONDS),
                     retry_policy=RetryPolicy(maximum_attempts=1),

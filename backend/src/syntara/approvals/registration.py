@@ -17,8 +17,6 @@ def _register_approval_activities(registry: ActivityRegistry, activities: Approv
             expire_handler=activities.expire,
         )
     )
-    registry.register(ActivityDefinition("approval.expire", 1, activities.expire))
-    registry.register(ActivityDefinition("approval.cancel", 1, activities.cancel))
 
 
 class ApprovalActivityProvider:
