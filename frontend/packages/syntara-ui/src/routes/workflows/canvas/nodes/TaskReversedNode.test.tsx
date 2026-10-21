@@ -68,7 +68,6 @@ describe('TaskReversedNodeComponent', () => {
       // Script executor label
       expect(screen.getByText('Script')).toBeInTheDocument()
     })
-
   })
 
   describe('Different Executors', () => {
