@@ -103,7 +103,9 @@ Carry the confirmed values as `PASSWORD_PATH`, `CA_PATH` (for HTTPS only), `BACK
 
 ### Step 4: Preflight checks
 
-Before running, follow the repository setup rule: run `make install` from the repository root. For real-backend mode, verify the selected endpoints and automatically start a local E2E Vite server if no UI is already running.
+Before running, ensure dependencies are installed. Run `make install` from the repository root after a fresh clone or when required dependencies are missing or have changed. It runs `npm ci` for the frontend, so it does not need to run before every wizard launch.
+
+For real-backend mode, verify the selected endpoints and automatically start a local E2E Vite server if no UI is already running.
 
 **For real backend mode:**
 
