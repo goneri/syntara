@@ -178,7 +178,8 @@ def _deny_all_refs(uri: str) -> NoReturn:
     raise NoSuchResource(ref=uri)  # type: ignore[call-arg]
 
 
-_NO_REF_REGISTRY: Registry[Any] = Registry(retrieve=_deny_all_refs)  # type: ignore[call-arg]
+NO_REF_REGISTRY: Registry[Any] = Registry(retrieve=_deny_all_refs)  # type: ignore[call-arg]
+"""Shared registry that denies external JSON Schema resource retrieval."""
 
 
 # ---------------------------------------------------------------------------
@@ -236,5 +237,5 @@ def apply_schema_defaults(
         jsonschema.SchemaError: If the schema itself is malformed.
 
     """
-    validator = _DefaultFillingDraft7Validator(schema, registry=_NO_REF_REGISTRY)
+    validator = _DefaultFillingDraft7Validator(schema, registry=NO_REF_REGISTRY)
     validator.validate(input_data)
