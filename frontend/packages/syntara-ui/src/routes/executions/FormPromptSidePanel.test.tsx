@@ -4,6 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { axe } from 'vitest-axe'
 
+import { SynPanel } from '../../components/layout/SynPanel'
+
+import {
+  FormPromptRespondPanelFooterOutlet,
+  FormPromptRespondPanelFooterProvider,
+  FormPromptRespondPanelFooterSlot,
+} from './formPrompt/FormPromptRespondPanelFooter'
 import { FormPromptSidePanel } from './FormPromptSidePanel'
 
 vi.mock('./FormPromptResponseContent', () => ({
@@ -22,6 +29,27 @@ const mockFormPrompt: FormsAPI.components['schemas']['FormPromptSummary'] = {
   temporal_activity_id: 'act-1',
 }
 
+function FormPromptPanelFooterFixture() {
+  return (
+    <SynPanel footer={<FormPromptRespondPanelFooterOutlet />} hasNoPadding isFullHeight>
+      <div aria-label="Form prompt response">
+        Prompt fp-1
+        <FormPromptRespondPanelFooterSlot>
+          <button type="button">Submit response</button>
+        </FormPromptRespondPanelFooterSlot>
+      </div>
+    </SynPanel>
+  )
+}
+
+function FormPromptPanelFooterFixtureRoot() {
+  return (
+    <FormPromptRespondPanelFooterProvider>
+      <FormPromptPanelFooterFixture />
+    </FormPromptRespondPanelFooterProvider>
+  )
+}
+
 describe('FormPromptSidePanel', () => {
   it('renders respond header and content', () => {
     render(
@@ -29,7 +57,15 @@ describe('FormPromptSidePanel', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Respond to prompt' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Form prompt response')).toHaveTextContent('Prompt fp-1')
+    expect(screen.getByLabelText('Form prompt response')).toHaveTextContent(/Prompt fp-1/)
+  })
+
+  it('projects respond actions into the SynPanel footer', async () => {
+    render(<FormPromptPanelFooterFixtureRoot />)
+
+    const responseRegion = screen.getByLabelText('Form prompt response')
+    const submitButton = await screen.findByRole('button', { name: 'Submit response' })
+    expect(responseRegion).not.toContainElement(submitButton)
   })
 
   it('calls onClose when close is clicked', async () => {
