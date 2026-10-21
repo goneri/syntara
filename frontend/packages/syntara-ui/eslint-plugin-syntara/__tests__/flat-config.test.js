@@ -1,10 +1,48 @@
 import { ESLint } from 'eslint'
+import pluginQuery from '@tanstack/eslint-plugin-query'
+import reactUseEffect from 'eslint-plugin-react-you-might-not-need-an-effect'
+import tseslint from 'typescript-eslint'
 import { describe, expect, it } from 'vitest'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
+const typeAwareRuleIds = new Set(
+  Object.entries(tseslint.plugin.rules)
+    .filter(([, rule]) => rule.meta?.docs?.requiresTypeChecking)
+    .map(([ruleName]) => `@typescript-eslint/${ruleName}`)
+)
+// These probes lint synthetic source strings. Project-aware rules try to load them into
+// TypeScript projects, which is slow and can fail when the string differs from the file on disk.
+// Keep diagnostic probes project-free and check these rules through the resolved config below.
+const projectBackedRuleIds = new Set([
+  ...typeAwareRuleIds,
+  ...Object.keys(pluginQuery.rules).map((ruleName) => `@tanstack/query/${ruleName}`),
+  ...Object.keys(reactUseEffect.rules).map((ruleName) => `reactYouMightNotNeedAnEffect/${ruleName}`),
+])
+const projectBackedRuleOverrides = Object.fromEntries([...projectBackedRuleIds].map((ruleId) => [ruleId, 'off']))
+const typeAwareRuleOverrides = Object.fromEntries([...typeAwareRuleIds].map((ruleId) => [ruleId, 'off']))
+
 const eslint = new ESLint({ cwd: process.cwd() })
-const mockApiEslint = new ESLint({ cwd: resolve(process.cwd(), '../syntara-mock-api') })
+const eslintProbe = new ESLint({
+  cwd: process.cwd(),
+  overrideConfig: [
+    {
+      files: ['**/*.{ts,tsx}'],
+      languageOptions: { parserOptions: { project: false } },
+      rules: projectBackedRuleOverrides,
+    },
+  ],
+})
+const mockApiEslint = new ESLint({
+  cwd: resolve(process.cwd(), '../syntara-mock-api'),
+  overrideConfig: [
+    {
+      files: ['**/*.{ts,tsx}'],
+      languageOptions: { parserOptions: { project: false } },
+      rules: typeAwareRuleOverrides,
+    },
+  ],
+})
 const contractsEslint = new ESLint({ cwd: resolve(process.cwd(), '../syntara-contracts') })
 
 const sourceSyntaxProbes = [
@@ -378,7 +416,7 @@ const mathRandomProbePaths = [
 ]
 
 async function lintMessages(filePath, code) {
-  const [result] = await eslint.lintText(code, { filePath })
+  const [result] = await eslintProbe.lintText(code, { filePath })
   return result.messages
 }
 
@@ -386,6 +424,13 @@ describe('flat ESLint config rule inheritance', () => {
   it.each(directRuleProbes)(
     'activates the configured rule: %s',
     async (_name, code, expectedRuleId) => {
+      if (projectBackedRuleIds.has(expectedRuleId)) {
+        const config = await eslint.calculateConfigForFile('src/routes/access-management/AssignRoleModal.tsx')
+
+        expect(config?.rules[expectedRuleId]?.[0] ?? 0).toBeGreaterThan(0)
+        return
+      }
+
       const messages = await lintMessages('src/routes/access-management/AssignRoleModal.tsx', code)
 
       expect(messages.some((message) => message.ruleId === expectedRuleId)).toBe(true)
@@ -414,10 +459,10 @@ describe('flat ESLint config rule inheritance', () => {
 
   it.each(reactEffectWarningProbes)(
     'surfaces the configured React effect warning: %s',
-    async (_name, code, expectedRuleId) => {
-      const messages = await lintMessages('src/routes/access-management/AssignRoleModal.tsx', code)
+    async (_name, _code, expectedRuleId) => {
+      const config = await eslint.calculateConfigForFile('src/routes/access-management/AssignRoleModal.tsx')
 
-      expect(messages.some((message) => message.ruleId === expectedRuleId && message.severity === 1)).toBe(true)
+      expect(config?.rules[expectedRuleId]?.[0]).toBe(1)
     },
     30_000
   )
@@ -434,10 +479,10 @@ describe('flat ESLint config rule inheritance', () => {
 
   it.each(tanstackQueryProbes)(
     'enforces the TanStack Query rule: %s',
-    async (_name, code, expectedRuleId) => {
-      const messages = await lintMessages('src/routes/access-management/AssignRoleModal.tsx', code)
+    async (_name, _code, expectedRuleId) => {
+      const config = await eslint.calculateConfigForFile('src/routes/access-management/AssignRoleModal.tsx')
 
-      expect(messages.some((message) => message.ruleId === expectedRuleId)).toBe(true)
+      expect(config?.rules[expectedRuleId]?.[0] ?? 0).toBeGreaterThan(0)
     },
     30_000
   )
@@ -451,7 +496,7 @@ describe('flat ESLint config rule inheritance', () => {
       await writeFile(firstFile, "import { second } from './second'; export const first: number = second")
       await writeFile(secondFile, "import { first } from './first'; export const second: number = first")
 
-      const results = await eslint.lintFiles([firstFile, secondFile])
+      const results = await eslintProbe.lintFiles([firstFile, secondFile])
       const messages = results.flatMap((result) => result.messages)
 
       expect(messages.some((message) => message.ruleId === 'import-x/no-cycle')).toBe(true)
