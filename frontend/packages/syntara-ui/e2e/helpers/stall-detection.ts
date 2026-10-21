@@ -34,6 +34,8 @@ export async function createWorkflowWithStallingActivityViaApi(
         parameters: {
           language: 'python',
           code: `import time\ntime.sleep(${actualDuration})`,
+        },
+        settings: {
           expected_duration: expectedDuration,
         },
       },
@@ -68,6 +70,8 @@ export async function createWorkflowWithFastActivityViaApi(
         parameters: {
           language: 'python',
           code: `import time\ntime.sleep(${actualDuration})`,
+        },
+        settings: {
           expected_duration: expectedDuration,
         },
       },
@@ -108,13 +112,13 @@ export async function createWorkflowWithoutExpectedDurationViaApi(
 }
 
 /**
- * Poll for stall warning icon on an activity row.
+ * Poll for stall warning label on an activity row.
  * Scoped to the activity row to avoid false matches.
  */
 export async function waitForActivityStallWarning(app: Page, activityName: string, timeout = 30_000): Promise<void> {
   const activityRow = app.getByRole('row').filter({ hasText: activityName })
-  // Look for warning/delayed icon in the activity row
-  await expect(activityRow.getByRole('img', { name: /stall|delay/i })).toBeVisible({ timeout })
+  // Look for "Stalled" text label in the activity row
+  await expect(activityRow.getByText('Stalled')).toBeVisible({ timeout })
 }
 
 /**
@@ -126,11 +130,11 @@ export async function waitForExecutionDelayedBadge(locatorScope: Locator, timeou
 }
 
 /**
- * Assert that no stall warning icon is present on an activity row.
+ * Assert that no stall warning label is present on an activity row.
  */
 export async function assertNoStallWarning(app: Page, activityName: string): Promise<void> {
   const activityRow = app.getByRole('row').filter({ hasText: activityName })
-  await expect(activityRow.getByRole('img', { name: /stall|delay/i })).toHaveCount(0, { timeout: 2_000 })
+  await expect(activityRow.getByText('Stalled')).toHaveCount(0, { timeout: 2_000 })
 }
 
 /**
