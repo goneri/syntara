@@ -1,12 +1,5 @@
 import { StackItem } from '@patternfly/react-core'
-import {
-  createContext,
-  use,
-  useLayoutEffect,
-  useMemo,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react'
+import { createContext, use, useLayoutEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react'
 
 import styles from '../FormPromptResponseContent.module.css'
 
@@ -55,17 +48,17 @@ export function FormPromptRespondPanelFooterProvider({
 }: FormPromptRespondPanelFooterProviderProps) {
   const store = useMemo(() => createFormPromptRespondPanelFooterStore(onFooterChange), [onFooterChange])
 
-  return (
-    <FormPromptRespondPanelFooterStoreContext value={store}>{children}</FormPromptRespondPanelFooterStoreContext>
-  )
+  return <FormPromptRespondPanelFooterStoreContext value={store}>{children}</FormPromptRespondPanelFooterStoreContext>
 }
 
-function useFormPromptRespondPanelFooterSnapshot(): ReactNode | null {
+/** Projected footer content for `SynPanel` `footer` (omit prop when null to avoid an empty `PanelFooter`). */
+// eslint-disable-next-line react-refresh/only-export-components -- footer snapshot hook for `SynPanel`
+export function useFormPromptRespondPanelFooterSnapshot(): ReactNode | null {
   const store = use(FormPromptRespondPanelFooterStoreContext) ?? emptyFormPromptRespondPanelFooterStore
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
 }
 
-/** Renders projected footer content; pass as `SynPanel` `footer` (sibling to main content, not an ancestor of the slot). */
+/** Renders projected footer content (prefer `useFormPromptRespondPanelFooterSnapshot` for `SynPanel` `footer`). */
 export function FormPromptRespondPanelFooterOutlet() {
   return useFormPromptRespondPanelFooterSnapshot()
 }
@@ -95,9 +88,7 @@ export function FormPromptRespondPanelFooterSlot({ children }: FormPromptRespond
 }
 
 /** Test helper: renders provider content plus projected footer in the document. */
-export function FormPromptRespondPanelFooterTestHarness({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+export function FormPromptRespondPanelFooterTestHarness({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <FormPromptRespondPanelFooterProvider>
       {children}
