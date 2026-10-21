@@ -37,11 +37,12 @@ test.describe('Stall detection core behavior', () => {
 
     try {
       // Navigate to builder and run workflow
-      await app.goto(toAppUrl(`/builder/${id}`))
+      await app.goto(toAppUrl(`/workflow-builder/${id}`))
       await waitForUIReady(app)
 
       // Run workflow and capture execution detail URL
       const executionUrl = await runWorkflowFromBuilderAndCaptureUrl(app)
+      await waitForUIReady(app)
 
       // Assert: Activity is running (no stall yet) — proves WebSocket will deliver change
       await expect(app.getByText('Activity 1')).toBeVisible({ timeout: 15_000 })

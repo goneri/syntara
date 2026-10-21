@@ -29,11 +29,12 @@ test.describe('Stall detection false positives', () => {
 
     try {
       // Navigate to builder and run workflow
-      await app.goto(toAppUrl(`/builder/${id}`))
+      await app.goto(toAppUrl(`/workflow-builder/${id}`))
       await waitForUIReady(app)
 
       // Run workflow and capture execution detail URL
       await runWorkflowFromBuilderAndCaptureUrl(app)
+      await waitForUIReady(app)
 
       // Wait for Activity 1 to complete
       await expect(pageHeader(app).getByText('Completed')).toBeVisible({ timeout: 30_000 })

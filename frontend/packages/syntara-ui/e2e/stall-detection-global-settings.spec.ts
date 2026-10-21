@@ -44,11 +44,12 @@ test.describe('Stall detection global settings', () => {
 
       try {
         // Navigate to builder and run workflow
-        await app.goto(toAppUrl(`/builder/${id}`))
+        await app.goto(toAppUrl(`/workflow-builder/${id}`))
         await waitForUIReady(app)
 
         // Run workflow and capture execution detail URL
         await runWorkflowFromBuilderAndCaptureUrl(app)
+        await waitForUIReady(app)
 
         // Wait for stall warning to appear (proves global setting was inherited)
         await waitForActivityStallWarning(app, 'Activity 1', 30_000)
