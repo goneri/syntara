@@ -760,7 +760,7 @@ describe('CredentialFormModal', () => {
       const user = userEvent.setup()
       render(<CredentialFormModal isOpen onClose={vi.fn()} />, { wrapper })
 
-      await user.click(screen.getByRole('button', { name: 'Credential type help' }))
+      await user.click(screen.getByRole('button', { name: 'More info for Credential type' }))
 
       expect(
         screen.getByText(/SASL username and password for connector validation and listener runtime/)
