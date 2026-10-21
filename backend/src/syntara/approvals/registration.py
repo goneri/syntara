@@ -7,7 +7,16 @@ from syntara.workflow_runtime.registry import ActivityDefinition, ActivityRegist
 
 def _register_approval_activities(registry: ActivityRegistry, activities: ApprovalActivities) -> None:
     """Install approval handlers; worker composition selects queues and dependencies."""
-    registry.register(ActivityDefinition("approval.request", 1, activities.request, supports_deferred=True))
+    registry.register(
+        ActivityDefinition(
+            "approval.request",
+            1,
+            activities.request,
+            supports_deferred=True,
+            cancel_handler=activities.cancel,
+            expire_handler=activities.expire,
+        )
+    )
     registry.register(ActivityDefinition("approval.expire", 1, activities.expire))
     registry.register(ActivityDefinition("approval.cancel", 1, activities.cancel))
 

@@ -156,6 +156,40 @@ async def test_adapter_routes_container_activity_to_executor() -> None:
 
 
 @pytest.mark.asyncio
+async def test_adapter_invokes_registered_lifecycle_hook() -> None:
+    """Lifecycle operations use the provider hook attached to the activity."""
+    registry = ActivityRegistry()
+    cancel = AsyncMock(return_value=Completed({"cancelled_count": 1}))
+    registry.register(
+        ActivityDefinition(
+            "approval.request",
+            1,
+            AsyncMock(),
+            supports_deferred=True,
+            cancel_handler=cancel,
+        )
+    )
+    adapter = RegisteredActivities(registry, MagicMock(), MagicMock())
+    execution_id = uuid4()
+    project_id = uuid4()
+
+    with patch("temporalio.activity.info", return_value=MagicMock(activity_id="cancel_1")):
+        result = await adapter.execute(
+            {
+                "name": "approval.request",
+                "version": 1,
+                "operation": "cancel",
+                "input": {"reason": "workflow cancelled"},
+                "execution_id": str(execution_id),
+                "project_id": str(project_id),
+            }
+        )
+
+    assert result == {"output": {"cancelled_count": 1}}
+    cancel.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_handler_cancellation_propagates() -> None:
     """Cancellation is not translated into a successful output or ordinary failure."""
     definition = ActivityDefinition("cancelled", 1, AsyncMock(side_effect=asyncio.CancelledError))

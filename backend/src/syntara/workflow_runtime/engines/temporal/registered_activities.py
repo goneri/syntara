@@ -21,7 +21,7 @@ from syntara.core.lib.encryption import SecretEncryptor
 from syntara.workflow_runtime.container import ContainerExecutionRequest, ContainerExecutor, OpenShiftContainerExecutor
 from syntara.workflow_runtime.contracts import ActivityContext, ActivityError, Completed, Deferred
 from syntara.workflow_runtime.models import ActivityCompletion
-from syntara.workflow_runtime.registry import ActivityRegistry
+from syntara.workflow_runtime.registry import ActivityDefinition, ActivityRegistry
 
 logger = structlog.stdlib.get_logger(__name__)
 REGISTERED_ACTIVITY = "execute_registered_activity_v1"
@@ -107,6 +107,25 @@ class RegisteredActivities:
             session.add(row)
             await session.commit()
 
+    async def _run_lifecycle_operation(
+        self,
+        request: dict[str, Any],
+        definition: ActivityDefinition,
+        context: ActivityContext,
+    ) -> dict[str, Any] | None:
+        """Run a lifecycle hook, returning ``None`` for normal execution."""
+        operation = request.get("operation", "execute")
+        if operation == "execute":
+            return None
+        if operation not in {"cancel", "expire"}:
+            msg = f"Unsupported registered activity operation: {operation}"
+            raise ActivityError(msg, code="InvalidActivityOperation")
+        outcome = await definition.invoke_lifecycle(operation, request.get("input", {}), context)
+        if isinstance(outcome, Deferred):
+            msg = f"Lifecycle operation cannot defer: {definition.name}@{definition.version} ({operation})"
+            raise ActivityError(msg, code="InvalidActivityLifecycle")
+        return {"output": outcome.output}
+
     @activity.defn(name=REGISTERED_ACTIVITY)
     async def execute(self, request: dict[str, Any]) -> dict[str, Any]:
         """Execute a pinned business handler and interpret its completion mode."""
@@ -120,6 +139,9 @@ class RegisteredActivities:
                 node_execution_id=info.activity_id,
                 idempotency_key=f"{request['execution_id']}:{info.activity_id}",
             )
+            lifecycle_result = await self._run_lifecycle_operation(request, definition, context)
+            if lifecycle_result is not None:
+                return lifecycle_result
             if definition.supports_deferred:
                 reference = await self._reserve(request, context)
                 context = ActivityContext(
