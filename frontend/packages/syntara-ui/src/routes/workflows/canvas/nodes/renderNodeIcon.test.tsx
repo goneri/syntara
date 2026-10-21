@@ -145,6 +145,15 @@ describe('renderNodeIcon', () => {
     expect(iconWrapper).toHaveClass('pf-m-2xl')
   })
 
+  it('uses semanticZoom scale for standard pf icons', () => {
+    const view = buildNodeIconView(MockIcon, RegistryNodeId.LOGIC_WAIT, 'semanticZoom')
+    render(<>{view}</>)
+
+    const iconWrapper = screen.getByTestId('node-icon-wrapper')
+    expect(iconWrapper).toHaveClass('pf-m-2xl')
+    expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
+  })
+
   it('applies semanticZoom scale for aap custom icon', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
     render(<>{view}</>)

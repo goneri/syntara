@@ -61,4 +61,25 @@ describe('getSynStepNodeWidth', () => {
     })
     expect(getSynStepNodeWidth(false, props)).toBe(SYN_STEP_DEFAULT_NODE_WIDTH)
   })
+
+  it('uses default width for task-reversed non-agentic tasks', () => {
+    const props = nodeProps({
+      type: FlowNodeType.TASK_REVERSED,
+      data: {
+        id: 't1',
+        type: ExecutorTypeEnum.SCRIPT,
+        name: 'Script',
+        parameters: { language: 'python', code: 'x' },
+      },
+    })
+    expect(getSynStepNodeWidth(false, props)).toBe(SYN_STEP_DEFAULT_NODE_WIDTH)
+  })
+
+  it('uses default width when task-shaped node has no data', () => {
+    const props = nodeProps({
+      type: FlowNodeType.TASK,
+      data: undefined as never,
+    })
+    expect(getSynStepNodeWidth(false, props)).toBe(SYN_STEP_DEFAULT_NODE_WIDTH)
+  })
 })
