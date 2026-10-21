@@ -7,8 +7,7 @@ from syntara.workflow_runtime.registry import ActivityDefinition, ActivityRegist
 
 def _register_invocation_activities(registry: ActivityRegistry, activities: InvocationActivities) -> None:
     """Install the invocation-owned synchronous agent activity."""
-    registry.register(ActivityDefinition("invocation.execute", 1, activities.execute))
-    registry.register(ActivityDefinition("invocation.cancel", 1, activities.cancel))
+    registry.register(ActivityDefinition("invocation.execute", 1, activities.execute, cancel_handler=activities.cancel))
 
 
 class InvocationActivityProvider:

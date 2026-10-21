@@ -514,8 +514,9 @@ class OrchestratorWorkflow(WorkflowConvergeMixin, WorkflowApprovalMixin):
         try:
             args: list[Any] = [
                 {
-                    "name": "invocation.cancel",
+                    "name": "invocation.execute",
                     "version": 1,
+                    "operation": "cancel",
                     "input": {"node_id": node_id, "reason": reason},
                     "execution_id": self.execution_id,
                     "project_id": self._project_id,
