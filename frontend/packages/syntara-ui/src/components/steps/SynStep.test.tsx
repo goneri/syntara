@@ -1,5 +1,5 @@
 import { ExecutorTypeEnum } from '@syntara/contracts'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { NodeProps } from '@xyflow/react'
 import { Position, ReactFlowProvider } from '@xyflow/react'
@@ -22,6 +22,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
 })
 
 import { SynStep } from './SynStep'
+import { SynStepExpandedAllContext } from './SynStepExpandedAllContext'
 
 function renderWithFlow(ui: ReactElement) {
   return render(<ReactFlowProvider>{ui}</ReactFlowProvider>)
@@ -279,11 +280,21 @@ describe('SynStep validation and interaction', () => {
   })
 
   it('responds to expandAll and collapseAll events', () => {
+    const expandAllEvent = new EventTarget()
+    const collapseAllEvent = new EventTarget()
+
     renderWithFlow(
-      <SynStep nodeProps={baseNodeProps} collapsible>
-        <span>Content</span>
-      </SynStep>
+      <SynStepExpandedAllContext.Provider value={{ expandAllEvent, collapseAllEvent }}>
+        <SynStep nodeProps={baseNodeProps} collapsible>
+          <span>Content</span>
+        </SynStep>
+      </SynStepExpandedAllContext.Provider>
     )
+
+    act(() => {
+      expandAllEvent.dispatchEvent(new Event('expandAll'))
+      collapseAllEvent.dispatchEvent(new Event('collapseAll'))
+    })
 
     expect(screen.getByText('Content')).toBeInTheDocument()
   })
