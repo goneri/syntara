@@ -3,6 +3,7 @@ import { Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table'
 import type { ExecutionPlaneAPI } from '@syntara/contracts'
 import { useMemo } from 'react'
 
+import { AppRoute } from '../../app/AppRoute'
 import { executionPlaneClient } from '../../client'
 import { SynLabel } from '../../components/labels/SynLabel'
 import { SynPage, SynPageBody } from '../../components/layout/SynPage'
@@ -14,6 +15,7 @@ import {
   SynListPanelView,
 } from '../../components/panels/list/SynListPanel'
 import { SynPageTitle } from '../../components/SynPageTitle'
+import { LinkCell } from '../../components/table/LinkCell'
 import { useCanI } from '../../hooks/useCanI'
 import { useCursorPagination, useCursorReset } from '../../hooks/useCursorPagination'
 import type { FilterFieldDefinition } from '../../types/filters'
@@ -43,7 +45,9 @@ function ExecutionPlaneTableContent({ rows }: Readonly<{ rows: ExecutionTarget[]
         {rows.map((target) => (
           <Tr key={target.id}>
             <Td dataLabel="Name">
-              <Truncate content={target.name} />
+              <LinkCell href={AppRoute.ExecutionPlane.Detail.replace(':executionTargetId', target.id)}>
+                <Truncate content={target.name} />
+              </LinkCell>
             </Td>
             <Td dataLabel="Cluster">
               <Truncate content={target.cluster_id} />
