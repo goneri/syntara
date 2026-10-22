@@ -97,6 +97,26 @@ function TestWrapper({
   return <IntegrationDetailsStep control={control} setValue={setValue} onTypeChange={onTypeChange} />
 }
 
+function KafkaTestWrapper() {
+  const { control, setValue } = useForm<IntegrationFormData>({
+    defaultValues: {
+      name: '',
+      description: '',
+      integration_type: IntegrationTypeEnum.KAFKA,
+      configuration: {
+        integration_type: IntegrationTypeEnum.KAFKA,
+        bootstrap_servers: '',
+        sasl_mechanism: 'SCRAM-SHA-256',
+        allow_http: false,
+        insecure_skip_tls_verify: false,
+      },
+      scope: 'global',
+      project_ids: [],
+    },
+  })
+  return <IntegrationDetailsStep control={control} setValue={setValue} onTypeChange={vi.fn()} />
+}
+
 describe('IntegrationDetailsStep', () => {
   it('renders heading and description', () => {
     render(<TestWrapper />)
@@ -355,6 +375,16 @@ describe('IntegrationDetailsStep', () => {
 
       await user.clear(textarea)
       expect(textarea).toHaveValue('')
+    })
+
+    it('hides Allow HTTP for Kafka so the connection stays SASL_SSL', async () => {
+      const user = userEvent.setup()
+      render(<KafkaTestWrapper />)
+
+      await user.click(screen.getByText('Security'))
+
+      expect(screen.queryByRole('checkbox', { name: /allow http connections/i })).not.toBeInTheDocument()
+      expect(screen.getByRole('checkbox', { name: /disable tls certificate verification/i })).toBeInTheDocument()
     })
 
     it('renders security section for AAP type', async () => {
