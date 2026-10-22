@@ -21,7 +21,11 @@ from syntara.core.services import BaseService
 from syntara.core.services.extensions import ConvertResourceMixin
 from syntara.core.services.secret_service import SecretService
 from syntara.core.services.user_reference_resolution import UserReferenceResolverMixin
-from syntara.credentials.exceptions import CredentialDisabledError, CredentialValidationError
+from syntara.credentials.exceptions import (
+    CredentialDecryptionError,
+    CredentialDisabledError,
+    CredentialValidationError,
+)
 from syntara.credentials.lib.injector_resolver import InjectorResolver
 from syntara.credentials.lib.kafka_connection import (
     KAFKA_CONNECTION_TYPE_NAME,
@@ -714,6 +718,8 @@ class IntegrationService(UserReferenceResolverMixin, BaseService):
         Raises:
             IntegrationCredentialNotFoundError: If the credential or its type is not found.
             CredentialDisabledError: If the credential is disabled.
+            CredentialValidationError: If a Kafka-backed credential fails its login rules.
+            CredentialDecryptionError: If the credential's secret cannot be decrypted.
             RuntimeError: If SecretService is not available.
 
         """
@@ -864,7 +870,7 @@ class IntegrationService(UserReferenceResolverMixin, BaseService):
         if integration.management_credential_id:
             try:
                 resolved_credential = await self._resolve_credential(integration.management_credential_id)
-            except (CredentialDisabledError, CredentialValidationError) as exc:
+            except (CredentialDisabledError, CredentialValidationError, CredentialDecryptionError) as exc:
                 await self._fail_validation(integration, exc)
 
         integration.validation_status = IntegrationStatus.VALIDATING
@@ -1006,7 +1012,7 @@ class IntegrationService(UserReferenceResolverMixin, BaseService):
         if integration.management_credential_id:
             try:
                 resolved_credential = await self._resolve_credential(integration.management_credential_id)
-            except CredentialDisabledError as exc:
+            except (CredentialDisabledError, CredentialValidationError, CredentialDecryptionError) as exc:
                 await self._fail_refresh(integration, exc)
 
         integration.refresh_status = IntegrationRefreshStatus.REFRESHING
