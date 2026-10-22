@@ -85,8 +85,9 @@ hints, and every 30 seconds with 10% jitter. It keeps one local consumer per
 active subscription; Kafka assigns partitions. Readiness is exposed through
 `EventWorkerManager.ready` after the first successful authoritative database
 reconciliation, without waiting for broker connections. An enabled process with
-no subscriptions remains healthy and idle. HTTP probes and operational routes
-are outside this process API.
+no subscriptions remains healthy and idle. The container exposes loopback-only
+exec probes through `syntara.eventstreams.consumer_health`; see the
+[Kafka worker operations guide](docs/kafka-worker-operations.md).
 
 Startup/replacement work is limited to eight concurrent tasks with a 30-second
 attempt deadline. Preparation and finalization each have a shared limit of eight.
@@ -114,8 +115,11 @@ Only currently assigned consumers may commit Kafka positions. Redis closes after
 drain, Temporal client references follow the existing SDK-managed cleanup
 pattern, and the database engine is disposed afterward.
 
-This command adds no operator/compose packaging, execution-plane deployment,
-autoscaling, per-subscription deployments, Visibility system, filtering, or Publish.
+The backend image includes `start-kafka-worker`. Optional compose profiles provide
+the worker and a disposable local Kafka fixture; see
+[local Kafka examples](samples/kafka/README.md). The operator packages a separate
+control-plane deployment with manual replica/resource controls. Execution-plane
+placement, autoscaling, per-subscription deployments and full Visibility are deferred.
 No database or public API schema changes are required. To stop this process,
 drain it and disable the switch; retain the existing delivery/Execution evidence
 and apply the upstream migration downgrade safeguards separately.
