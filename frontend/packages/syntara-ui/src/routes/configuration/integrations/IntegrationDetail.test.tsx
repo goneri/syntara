@@ -1,4 +1,5 @@
 import type { IntegrationsAPI, Tool } from '@syntara/contracts'
+import { IntegrationTypeEnum } from '@syntara/contracts'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useParams } from '@tanstack/react-router'
 import { render, screen, within, act, waitFor } from '@testing-library/react'
@@ -276,6 +277,30 @@ describe('IntegrationDetail', () => {
       expect(screen.getByText('Global')).toBeInTheDocument()
       expect(screen.getByText('https://mcp.example.com')).toBeInTheDocument()
       expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('shows OpenShift cluster details and namespace', () => {
+      setupDefaultMocks({
+        integration: {
+          name: 'Production cluster',
+          integration_type: IntegrationTypeEnum.OPENSHIFT,
+          configuration: {
+            integration_type: IntegrationTypeEnum.OPENSHIFT,
+            base_url: 'https://api.example.com:6443',
+            namespace: 'workers',
+            allow_http: false,
+            insecure_skip_tls_verify: false,
+          },
+        },
+      })
+      render(<IntegrationDetail />, { wrapper })
+
+      expect(screen.getByRole('heading', { name: 'Production cluster', level: 1 })).toBeInTheDocument()
+      expect(screen.getByText('Cluster name')).toBeInTheDocument()
+      expect(screen.getByText('OpenShift')).toBeInTheDocument()
+      expect(screen.getByText('https://api.example.com:6443')).toBeInTheDocument()
+      expect(screen.getByText('Namespace')).toBeInTheDocument()
+      expect(screen.getByText('workers')).toBeInTheDocument()
     })
 
     it('shows credential name as a link when credential is assigned', () => {
@@ -1224,6 +1249,7 @@ describe('IntegrationDetail', () => {
       render(<IntegrationDetail />, { wrapper })
 
       expect(screen.queryByText('Security')).not.toBeInTheDocument()
+      expect(screen.queryByText('Namespace')).not.toBeInTheDocument()
     })
 
     it('does not show Security section without security fields in configuration', () => {

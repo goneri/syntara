@@ -129,7 +129,7 @@ function IntegrationDetailsTab({
             </SynDetail>
           )}
           <SynDetail label="URL">{getBaseUrl(integration) || '—'}</SynDetail>
-          {'namespace' in integration.configuration && (
+          {integration.configuration && 'namespace' in integration.configuration && (
             <SynDetail label="Namespace">{integration.configuration.namespace}</SynDetail>
           )}
           <SynDetail label="Connection credential">
