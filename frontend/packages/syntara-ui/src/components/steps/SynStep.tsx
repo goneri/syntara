@@ -259,7 +259,7 @@ export function SynStep(props: {
         ) : (
           props.children
         )}
-        {!isSemanticZoom && props.showExecutionBadge !== false && props.executionState && (
+        {props.showExecutionBadge !== false && props.executionState && (
           <ExecutionStatusBadge
             status={props.executionState?.status ?? 'pending'}
             retryCount={props.executionState?.retry_count}
@@ -273,7 +273,7 @@ export function SynStep(props: {
             </Label>
           </div>
         )}
-        {!isSemanticZoom && hasValidationError && <ValidationErrorBadge />}
+        {hasValidationError && <ValidationErrorBadge />}
         <SynStepConnectionHandles
           isSemanticZoom={isSemanticZoom}
           semanticZoomHandleStyle={semanticZoomHandleStyle}

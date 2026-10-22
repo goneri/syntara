@@ -63,12 +63,12 @@
 
 .actions {
   position: absolute;
-  top: var(--pf-t--global--spacer--xs);
-  right: var(--pf-t--global--spacer--xs);
+  top: var(--pf-t--global--spacer--md);
+  right: var(--pf-t--global--spacer--md);
   display: flex;
   align-items: center;
-  gap: var(--pf-t--global--spacer--xs);
-  padding: var(--pf-t--global--spacer--xs);
+  gap: var(--pf-t--global--spacer--md);
+  padding: var(--pf-t--global--spacer--md);
   border-radius: var(--pf-t--global--border--radius--medium);
   background-color: var(--pf-t--global--background--color--floating--default);
   box-shadow: var(--pf-t--global--box-shadow--sm);
@@ -82,4 +82,16 @@
 .root[data-selected='true'] .actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+.actionControl :global(.pf-v6-c-button),
+.actionControl :global(.pf-v6-c-menu-toggle) {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: var(--pf-t--global--spacer--md);
+}
+
+.actionControl :global(.pf-v6-c-menu-toggle svg) {
+  width: var(--pf-t--global--icon--size--xl);
+  height: var(--pf-t--global--icon--size--xl);
 }

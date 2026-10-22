@@ -1,4 +1,4 @@
-import { Button, Content, ContentVariants, Flex, Stack, StackItem, Tooltip } from '@patternfly/react-core'
+import { Button, Content, ContentVariants, Flex, Icon, Stack, StackItem, Tooltip } from '@patternfly/react-core'
 import { RhUiEditIcon } from '@patternfly/react-icons'
 import { useNodeId, useStore, useUpdateNodeInternals } from '@xyflow/react'
 import { useLayoutEffect, type CSSProperties, type ReactNode } from 'react'
@@ -106,17 +106,23 @@ export function SynStepSemanticZoomBody(props: {
               <Button
                 variant="plain"
                 aria-label={`Edit ${props.title}`}
-                className="nodrag nopan"
+                className={`${styles.actionControl} nodrag nopan`}
                 onClick={(event) => {
                   event.stopPropagation()
                   editAction.onClick()
                 }}
                 onMouseDown={(event) => event.stopPropagation()}
               >
-                <RhUiEditIcon />
+                <Icon size="xl">
+                  <RhUiEditIcon />
+                </Icon>
               </Button>
             ) : null}
-            <SynStepMenu menuActions={[...menuActions]} popperProps={{ position: 'right' }} />
+            <SynStepMenu
+              menuActions={[...menuActions]}
+              className={styles.actionControl}
+              popperProps={{ position: 'right' }}
+            />
           </Flex>
         ) : null}
         <SemanticZoomBranchSourceHandles

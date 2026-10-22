@@ -154,20 +154,20 @@ describe('renderNodeIcon', () => {
     expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
   })
 
-  it('applies semanticZoom scale for aap custom icon', () => {
+  it('uses semantic zoom mark artwork for aap nodes', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
     render(<>{view}</>)
 
-    const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(3.25)')
+    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
+    expect(screen.queryByTestId('styled-icon')).not.toBeInTheDocument()
   })
 
-  it('applies semanticZoom scale for eda trigger icon', () => {
+  it('uses semantic zoom mark artwork for eda trigger nodes', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'semanticZoom')
     render(<>{view}</>)
 
-    const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(2.65)')
+    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
+    expect(screen.queryByTestId('styled-icon')).not.toBeInTheDocument()
   })
 
   it('applies different custom icon offset for header variant', () => {

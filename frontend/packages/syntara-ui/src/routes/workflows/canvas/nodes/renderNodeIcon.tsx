@@ -2,6 +2,8 @@ import { Icon } from '@patternfly/react-core'
 import type { IconSize } from '@patternfly/react-core'
 import type { ComponentType, CSSProperties, ReactNode } from 'react'
 
+import AnsibleMarkIcon from '../../../../assets/ansible-automation-platform-mark.svg?react'
+import EdaMarkIcon from '../../../../assets/eda-mark.svg?react'
 import { AAP_NODE_IDS, RegistryNodeId } from '../../../../constants'
 
 export type NodeIconVariant = 'canvas' | 'semanticZoom' | 'list' | 'header' | 'legend'
@@ -11,7 +13,7 @@ type VariantConfig = { size: IconSize; iconSize: IconSize; customIconScale: numb
 /** Scaling config for AAP brand icons (Ansible logo has 1px internal padding in a 38x38 viewBox). */
 const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.8, customIconOffsetY: 0 },
-  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 3.25, customIconOffsetY: 0 },
+  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.2, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.5, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.8, customIconOffsetY: 1 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1.25, customIconOffsetY: 0 },
@@ -20,7 +22,7 @@ const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
 /** Scaling config for EDA brand icon (logo fills the full 36x36 viewBox edge-to-edge, so needs less scaling). */
 const edaVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.4, customIconOffsetY: 0 },
-  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.65, customIconOffsetY: 0 },
+  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.2, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.15, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.4, customIconOffsetY: 0 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1, customIconOffsetY: 0 },
@@ -45,6 +47,18 @@ function getVariantConfig(nodeId: string | undefined): Record<NodeIconVariant, V
   return standardVariantConfig
 }
 
+function resolveIconComponent(
+  IconComponent: ComponentType,
+  nodeId: string | undefined,
+  variant: NodeIconVariant
+): ComponentType {
+  const isAapIcon = AAP_NODE_IDS.has(nodeId as (typeof RegistryNodeId)[keyof typeof RegistryNodeId])
+  const isEdaIcon = nodeId === RegistryNodeId.TRIGGER_EDA
+  if (variant === 'semanticZoom' && isAapIcon) return AnsibleMarkIcon
+  if (variant === 'semanticZoom' && isEdaIcon) return EdaMarkIcon
+  return IconComponent
+}
+
 export function renderNodeIcon(
   IconComponent?: ComponentType,
   nodeId?: string,
@@ -57,16 +71,19 @@ export function renderNodeIcon(
   const isAapIcon = AAP_NODE_IDS.has(nodeId as (typeof RegistryNodeId)[keyof typeof RegistryNodeId])
   const isEdaIcon = nodeId === RegistryNodeId.TRIGGER_EDA
   const isCustomIcon = isAapIcon || isEdaIcon
+  const isSemanticZoomBrandMark = variant === 'semanticZoom' && isCustomIcon
   const shouldRotateIcon = nodeId === RegistryNodeId.LOGIC_CONDITION || nodeId === RegistryNodeId.LOGIC_CONVERGE
   const { size, iconSize, customIconScale, customIconOffsetY } = getVariantConfig(nodeId)[variant]
+  const ResolvedIcon = resolveIconComponent(IconComponent, nodeId, variant)
 
   const iconStyle: CSSProperties = {
     ...(shouldRotateIcon && { transform: 'rotate(90deg)' }),
-    ...(color && {
-      color,
-      // Override PatternFly Icon's inner content color so the SVG (fill: currentColor) picks it up
-      ['--pf-v6-c-icon__content--Color' as string]: color,
-    }),
+    ...(color &&
+      !isSemanticZoomBrandMark && {
+        color,
+        // Override PatternFly Icon's inner content color so the SVG (fill: currentColor) picks it up
+        ['--pf-v6-c-icon__content--Color' as string]: color,
+      }),
   }
 
   return (
@@ -78,7 +95,7 @@ export function renderNodeIcon(
     >
       {isCustomIcon ? (
         (() => {
-          const StyledIcon = IconComponent as ComponentType<{ style?: CSSProperties }>
+          const StyledIcon = ResolvedIcon as ComponentType<{ style?: CSSProperties }>
           return (
             <StyledIcon
               style={{
@@ -92,7 +109,7 @@ export function renderNodeIcon(
           )
         })()
       ) : (
-        <IconComponent />
+        <ResolvedIcon />
       )}
     </Icon>
   )

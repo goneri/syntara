@@ -127,6 +127,27 @@ describe('SynStep semantic zoom', () => {
     expect(screen.getByRole('button', { name: 'Edit Branch' })).toBeInTheDocument()
   })
 
+  it('shows execution and validation badges on semantic zoom tiles', () => {
+    viewportState.zoom = 0.5
+    const nodeProps = {
+      ...baseNodeProps,
+      data: { ...baseNodeProps.data, __validationError: true },
+    } as unknown as NodeProps
+
+    renderWithFlow(
+      <SynStep
+        nodeProps={nodeProps}
+        semanticZoomSummary={{ title: 'Analyze', typeLabel: 'Task Agent' }}
+        executionState={{ status: 'failed' }}
+      >
+        <span>Detailed body</span>
+      </SynStep>
+    )
+
+    expect(screen.getByRole('img', { name: 'Error' })).toBeInTheDocument()
+    expect(screen.getByTestId('validation-error-badge')).toBeInTheDocument()
+  })
+
   it('renders dashed-border semantic zoom tile when placeholder styling is set', () => {
     viewportState.zoom = 0.5
     renderWithFlow(
