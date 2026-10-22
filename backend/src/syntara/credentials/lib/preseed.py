@@ -21,6 +21,14 @@ from syntara.credentials.models.credential_type import CredentialType
 
 logger = structlog.stdlib.get_logger(__name__)
 
+# Must stay >= workflows.workflow_engine.utils.credential_scrubber.MIN_SECRET_LENGTH
+# (currently 4). Values shorter than that threshold are skipped by workflow-output
+# value scrubbing (to avoid mass false-positive redaction of short strings), so a
+# secret field accepted below this length could leak into workflow output unredacted.
+# Not imported directly: credential_scrubber already imports GA_CREDENTIAL_TYPES from
+# this module, and importing back would create a circular import.
+_KAFKA_PASSWORD_MIN_LENGTH = 4
+
 _UPSERT_UPDATE_FIELDS = (
     "description",
     "inputs",
@@ -48,6 +56,7 @@ GA_CREDENTIAL_TYPES: list[dict[str, Any]] = [
                     "label": "Password",
                     "type": "string",
                     "secret": True,
+                    "min_length": _KAFKA_PASSWORD_MIN_LENGTH,
                     "help_text": "Kafka SASL password. Encrypted at rest.",
                     "placeholder": "Enter password",
                 },

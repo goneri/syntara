@@ -1085,6 +1085,43 @@ class TestValidateInputs:
         }
         _validate_inputs({"verify_ssl": False}, boolean_required_inputs)
 
+    def test_min_length_rejects_short_string(self) -> None:
+        min_length_inputs = {
+            "fields": [{"id": "password", "label": "Password", "type": "string", "secret": True, "min_length": 4}],
+            "required": ["password"],
+        }
+        with pytest.raises(CredentialValidationError, match="at least 4 characters"):
+            _validate_inputs({"password": "abc"}, min_length_inputs)
+
+    def test_min_length_accepts_exact_boundary(self) -> None:
+        min_length_inputs = {
+            "fields": [{"id": "password", "label": "Password", "type": "string", "secret": True, "min_length": 4}],
+            "required": ["password"],
+        }
+        _validate_inputs({"password": "abcd"}, min_length_inputs)
+
+    def test_no_min_length_declared_allows_any_length(self) -> None:
+        # BEARER_TYPE_INPUTS has no min_length — a 1-char token must still pass.
+        _validate_inputs({"token": "a"}, BEARER_TYPE_INPUTS)
+
+    def test_kafka_preseed_password_enforces_min_secret_length(self) -> None:
+        """Wires the generic min_length validator to the real Kafka preseed schema.
+
+        Regression test for PR 897 review finding: a Kafka password shorter than
+        credential_scrubber.MIN_SECRET_LENGTH (4) could be saved, then silently
+        skipped by workflow-output value scrubbing, risking a plaintext leak.
+        """
+        from syntara.credentials.lib.preseed import GA_CREDENTIAL_TYPES
+        from syntara.workflows.workflow_engine.utils.credential_scrubber import MIN_SECRET_LENGTH
+
+        kafka_type = next(t for t in GA_CREDENTIAL_TYPES if t["name"] == "Kafka")
+        too_short = "x" * (MIN_SECRET_LENGTH - 1)
+        with pytest.raises(CredentialValidationError, match="at least 4 characters"):
+            _validate_inputs({"username": "u", "password": too_short}, kafka_type["inputs"])
+
+        at_minimum = "x" * MIN_SECRET_LENGTH
+        _validate_inputs({"username": "u", "password": at_minimum}, kafka_type["inputs"])
+
     def test_required_skipped_in_patch_mode(self) -> None:
         # PATCH mode: missing required fields are OK (they're preserved from existing)
         _validate_inputs({}, BEARER_TYPE_INPUTS, allow_sentinel=True)

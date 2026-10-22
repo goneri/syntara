@@ -88,6 +88,19 @@ def _validate_ssh_private_key(value: str) -> None:
         raise CredentialValidationError(msg) from None
 
 
+def _validate_min_length(field_id: str, value: Any, field_def: dict[str, Any]) -> None:  # noqa: ANN401
+    """Enforce an optional per-field ``min_length`` schema constraint.
+
+    Used by secret fields (e.g. Kafka's password) that must stay long enough
+    to be caught by credential_scrubber.MIN_SECRET_LENGTH-based value scrubbing
+    in workflow output — a value below that threshold is silently skipped there.
+    """
+    min_length = field_def.get("min_length")
+    if min_length is not None and isinstance(value, str) and len(value) < min_length:
+        msg = f"Field '{field_id}' must be at least {min_length} characters."
+        raise CredentialValidationError(msg)
+
+
 def _validate_field_value(field_id: str, value: Any, field_def: dict[str, Any]) -> None:  # noqa: ANN401
     """Validate a single field value against its schema definition."""
     choices = field_def.get("choices")
@@ -102,6 +115,8 @@ def _validate_field_value(field_id: str, value: Any, field_def: dict[str, Any]) 
     if field_def.get("type") == "string" and not isinstance(value, str):
         msg = f"Field '{field_id}' must be a string, got {type(value).__name__}"
         raise CredentialValidationError(msg)
+
+    _validate_min_length(field_id, value, field_def)
 
     if field_id == "ssh_private_key":
         _validate_ssh_private_key(value)
