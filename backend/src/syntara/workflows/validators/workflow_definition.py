@@ -832,24 +832,6 @@ def _is_type_discriminator_error(error: jsonschema.ValidationError) -> bool:
     return error.validator == "const" and list(error.relative_path) == ["type"]
 
 
-def _selected_branch_errors(
-    branches: dict[Any, list[jsonschema.ValidationError]],
-    branch_idx: Any,
-) -> list[jsonschema.ValidationError]:
-    """Filter discriminator noise only if one schema branch matches the authored type.
-
-    When no branch matches, keep the discriminator findings so unknown node types
-    still tell users which executor types the schema accepts.
-    """
-    selected = branches[branch_idx]
-    has_matching_branch = any(
-        not any(_is_type_discriminator_error(error) for error in errors) for errors in branches.values()
-    )
-    if not has_matching_branch:
-        return selected
-    return [error for error in selected if not _is_type_discriminator_error(error)]
-
-
 def _select_best_branch(
     context_errors: list[jsonschema.ValidationError],
 ) -> tuple[Any, dict[Any, list[jsonschema.ValidationError]]]:
@@ -858,6 +840,12 @@ def _select_best_branch(
     Groups by ``schema_path[0]`` (the branch index), prefers branches
     without type-discriminator ``const`` errors, and picks the one with
     fewest total errors.
+
+    When the authored ``type`` matches an executor, the chosen branch is by
+    construction free of discriminator errors, so callers never see ``'agentic'
+    was expected`` noise from the branches that did not match.  When no branch
+    matches, every candidate carries a discriminator error and those are kept
+    deliberately — they tell the user which executor types the schema accepts.
 
     Returns ``(best_branch_index, branches_dict)``.  The caller decides
     how to handle the ``branch_all_type_const`` fallback.
@@ -895,7 +883,7 @@ def _best_branch_messages(
     if not error.context:
         return [(error.message, list(error.absolute_path))]
     best_idx, branches = _select_best_branch(error.context)
-    best_errors = _selected_branch_errors(branches, best_idx)
+    best_errors = branches[best_idx]
     if len(best_errors) == 1 and _is_type_discriminator_error(best_errors[0]):
         return [(error.message, list(error.absolute_path))]
     return [(ctx.message, list(ctx.absolute_path)) for ctx in best_errors]
@@ -951,7 +939,7 @@ def _get_nested_parameter_errors(
         best_idx, branches = _select_best_branch(err.context)
         supplementary.extend(
             (ctx.message, path_prefix + list(ctx.absolute_path))
-            for ctx in _selected_branch_errors(branches, best_idx)
+            for ctx in branches[best_idx]
             if ctx.message not in original_set
         )
     return supplementary

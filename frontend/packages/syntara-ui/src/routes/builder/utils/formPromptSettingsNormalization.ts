@@ -75,8 +75,11 @@ function sanitizeFormPromptParameters(parameters: Record<string, unknown>): Reco
 
 /**
  * Normalize form_prompt activities before workflow definition validation/save.
- * Strips UI-only fields (e.g. fallback_behavior) and cross-step keys (e.g. approval
- * ``prompt``) that cause JSON Schema oneOf validation to surface misleading agentic errors.
+ *
+ * The backend form_prompt parameterSchema is `additionalProperties: false`, so any key
+ * outside the contract makes validate and save fail outright. Strips UI-only fields
+ * (e.g. `fallback_behavior`, mapped forward to `fallback_decision`), legacy node-level
+ * keys (e.g. `timezone`), and cross-step leftovers from a step that changed type.
  */
 export function normalizeFormPromptActivityForDefinition(activity: Activity): Activity {
   if (activity.type !== ActivityTypeEnum.FORM_PROMPT) return activity

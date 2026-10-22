@@ -535,11 +535,15 @@ class TestCollectFindings:
         result = validator.collect_findings(definition)
         node_findings = [finding for finding in result.findings if finding.node_id == "form1"]
         messages = [finding.message for finding in node_findings]
-        assert any(
-            finding.message == "Field required" and finding.field_path == "parameters.form_definition"
-            for finding in node_findings
-        )
-        assert "Additional properties are not allowed ('model', 'prompt' were unexpected)" in messages
+        reported = {(finding.message, finding.field_path) for finding in node_findings}
+
+        # The form prompt model pass replaces the raw JSON Schema wording, so each
+        # rejected key is reported against its own field path.
+        assert ("Field required", "parameters.form_definition") in reported
+        assert ("Extra inputs are not permitted", "parameters.prompt") in reported
+        assert ("Extra inputs are not permitted", "parameters.model") in reported
+        # The agentic branch requires ``prompt``; its errors must not leak onto a form_prompt node.
+        assert "'prompt' is a required property" not in messages
 
     def test_agentic_node_without_prompt_reports_missing_prompt(self, validator: WorkflowValidator) -> None:
         """A missing required prompt remains visible for a node declared as agentic."""
