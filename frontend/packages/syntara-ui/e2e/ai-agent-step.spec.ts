@@ -379,7 +379,7 @@ test.describe('AI Agent Step @pr-check', () => {
       // Open the dropdown and filter by the LLM integration name so the test
       // doesn't depend on scroll position when many integrations exist
       await openAiAgentModelPicker(app)
-      await app.getByTestId('ai-agent-node-form').getByPlaceholder('Select a model').fill(llmName)
+      await app.getByTestId('ai-agent-step-form').getByPlaceholder('Select a model').fill(llmName)
 
       await expectAiAgentIntegrationGroupsVisible(app, [llmName])
 
