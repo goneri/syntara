@@ -101,7 +101,7 @@ describe('stepIconResolver', () => {
   })
 
   describe('getCanvasStepIconDescriptor', () => {
-    it('returns switch icon for switch node', () => {
+    it('returns the switch icon for a switch step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'switch-1', type: 'switch', data: { id: 'switch-1', type: 'switch' } },
         null
@@ -109,7 +109,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.LOGIC_SWITCH)
     })
 
-    it('returns wait icon for wait node', () => {
+    it('returns the wait icon for a wait step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'wait-1', type: 'wait', data: { id: 'wait-1', type: 'wait' } },
         null
@@ -117,7 +117,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.LOGIC_WAIT)
     })
 
-    it('returns condition icon for condition node', () => {
+    it('returns the condition icon for a condition step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'cond-1', type: 'condition', data: { id: 'cond-1', type: 'condition' } },
         null
@@ -125,7 +125,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.LOGIC_CONDITION)
     })
 
-    it('returns loop icon for loop node', () => {
+    it('returns the loop icon for a loop step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'loop-1', type: 'loop', data: { id: 'loop-1', type: 'loop' } },
         null
@@ -133,7 +133,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.LOGIC_LOOP)
     })
 
-    it('returns converge icon for converge node', () => {
+    it('returns the converge icon for a converge step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'conv-1', type: 'converge', data: { id: 'conv-1', type: 'converge' } },
         null
@@ -141,7 +141,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.LOGIC_CONVERGE)
     })
 
-    it('returns approval icon for approval node', () => {
+    it('returns the approval icon for an approval step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'apr-1', type: 'approval', data: { id: 'apr-1', type: 'approval' } },
         null
@@ -149,7 +149,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBe(RegistryStepId.APPROVAL)
     })
 
-    it('returns manual trigger icon by default for trigger node', () => {
+    it('returns the manual trigger icon by default for a trigger step', () => {
       const result = getCanvasStepIconDescriptor(
         { id: 'trigger-0', type: 'trigger', data: { id: 'trigger-0', type: TriggerTypeEnum.MANUAL_TRIGGER } },
         { triggers: [{ type: TriggerTypeEnum.MANUAL_TRIGGER }] }
@@ -187,7 +187,7 @@ describe('stepIconResolver', () => {
       expect(result.id).toBeUndefined()
     })
 
-    it('delegates to getTaskIconDescriptor for task nodes', () => {
+    it('delegates to getTaskIconDescriptor for task steps', () => {
       const result = getCanvasStepIconDescriptor(
         {
           id: 'task-1',

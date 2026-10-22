@@ -54,7 +54,7 @@ export function ConvergeStepComponent(props: NodeProps<ConvergeNode>) {
       nodeProps={props}
       executionState={executionState}
       topBarColor={getStepTypeColor('converge')}
-      rootTestId="converge-node"
+      rootTestId="converge-step"
       semanticZoomSummary={{
         title: semanticZoomActivityTitle(props.data.name, `Untitled ${metadata.label}`),
         typeLabel: metadata.label,

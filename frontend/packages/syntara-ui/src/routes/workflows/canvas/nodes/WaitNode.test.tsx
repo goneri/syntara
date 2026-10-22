@@ -68,7 +68,7 @@ describe('WaitStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders wait node with name', () => {
+    it('renders wait step with name', () => {
       render(
         <ReactFlowProvider>
           <WaitStepComponent {...createNodeProps(baseWaitNode)} />

@@ -55,7 +55,7 @@ describe('SwitchStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders switch node with name', () => {
+    it('renders switch step with name', () => {
       render(<SwitchStepComponent {...createNodeProps(baseSwitchData)} />)
 
       expect(screen.getByText('Route by status')).toBeInTheDocument()

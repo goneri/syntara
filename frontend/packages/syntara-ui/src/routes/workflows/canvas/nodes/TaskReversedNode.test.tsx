@@ -56,7 +56,7 @@ describe('TaskReversedStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders task reversed node with name', () => {
+    it('renders reversed task step with name', () => {
       render(<TaskReversedStepComponent {...createNodeProps(baseTaskNode)} />)
 
       expect(screen.getByText('Loop Back Task')).toBeInTheDocument()
@@ -152,7 +152,7 @@ describe('TaskReversedStepComponent', () => {
     })
   })
 
-  describe('Node Structure', () => {
+  describe('Step Structure', () => {
     it('renders with correct structure', () => {
       render(<TaskReversedStepComponent {...createNodeProps(baseTaskNode)} />)
 

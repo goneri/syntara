@@ -140,7 +140,7 @@ describe('GenericStepComponent', () => {
     })
   })
 
-  describe('Node Structure', () => {
+  describe('Step Structure', () => {
     it('renders with correct structure', () => {
       render(<GenericStepComponent {...createNodeProps(baseGenericNode)} />)
 
