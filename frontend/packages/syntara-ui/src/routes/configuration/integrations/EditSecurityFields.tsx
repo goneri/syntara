@@ -17,9 +17,10 @@ import type { EditIntegrationFormValues } from './editIntegrationFormSchema'
 type EditSecurityFieldsProps = Readonly<{
   control: Control<EditIntegrationFormValues>
   errors: FieldErrors<EditIntegrationFormValues>
+  showAllowHttp?: boolean
 }>
 
-export function EditSecurityFields({ control, errors }: EditSecurityFieldsProps) {
+export function EditSecurityFields({ control, errors, showAllowHttp = true }: EditSecurityFieldsProps) {
   const [userExpanded, setUserExpanded] = useState(false)
   const skipTlsVerify = useWatch({ control, name: 'insecure_skip_tls_verify' })
   const isExpanded = userExpanded || !!errors.ca_certificate
@@ -32,19 +33,21 @@ export function EditSecurityFields({ control, errors }: EditSecurityFieldsProps)
       isIndented
     >
       <div className={styles.securityFields}>
-        <Controller
-          name="allow_http"
-          control={control}
-          render={({ field }) => (
-            <Checkbox
-              id="edit-allow-http"
-              label="Allow HTTP connections"
-              description="Permits unencrypted HTTP URLs for this integration"
-              isChecked={field.value}
-              onChange={(_event, checked) => field.onChange(checked)}
-            />
-          )}
-        />
+        {showAllowHttp && (
+          <Controller
+            name="allow_http"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id="edit-allow-http"
+                label="Allow HTTP connections"
+                description="Permits unencrypted HTTP URLs for this integration"
+                isChecked={field.value}
+                onChange={(_event, checked) => field.onChange(checked)}
+              />
+            )}
+          />
+        )}
         <Controller
           name="insecure_skip_tls_verify"
           control={control}
