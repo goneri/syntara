@@ -169,7 +169,7 @@ describe('TriggerStepComponent', () => {
     expect(screen.queryByText('Webhook trigger')).not.toBeInTheDocument()
   })
 
-  it('hides node menu when nodesConnectable is false', () => {
+  it('hides the step menu when nodesConnectable is false', () => {
     mockNodesConnectable.value = false
     render(<TriggerStepComponent {...createNodeProps()} />)
     expect(screen.queryByRole('button', { name: /step actions menu/i })).not.toBeInTheDocument()

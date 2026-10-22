@@ -1,7 +1,7 @@
 import type { ValueOf } from './types'
 
 /**
- * Node type and subtype identifiers for the builder StepRegistry (Add step panel).
+ * Step type and subtype identifiers for the builder StepRegistry (Add step panel).
  * Use these constants instead of string literals when comparing or registering registry ids.
  *
  * @example
@@ -33,16 +33,16 @@ export const RegistryStepId = {
   GENERIC: 'generic',
 } as const
 
-/** Union of registry node id values */
+/** Union of registry step id values */
 export type RegistryStepIdUnion = ValueOf<typeof RegistryStepId>
 
 /**
- * Set of all AAP (Ansible Automation Platform) node type IDs.
- * Use this to check if a node is any AAP variant instead of manually checking each type.
+ * Set of all AAP (Ansible Automation Platform) step type IDs.
+ * Use this to check if a step is any AAP variant instead of manually checking each type.
  *
  * @example
- * if (AAP_STEP_IDS.has(nodeId as RegistryStepId)) {
- *   // Handle AAP node (custom icon, colors, etc.)
+ * if (AAP_STEP_IDS.has(stepId as RegistryStepIdUnion)) {
+ *   // Handle AAP step (custom icon, colors, etc.)
  * }
  */
 export const AAP_STEP_IDS = new Set<RegistryStepIdUnion>([

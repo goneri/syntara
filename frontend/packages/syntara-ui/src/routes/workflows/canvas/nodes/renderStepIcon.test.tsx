@@ -25,14 +25,14 @@ describe('renderStepIcon', () => {
     expect(view).toBeUndefined()
   })
 
-  it('renders standard icon for non-custom nodes', () => {
+  it('renders a standard icon for steps without custom icons', () => {
     const view = renderStepIcon(MockIcon, 'test-node')
     render(<>{view}</>)
 
     expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
   })
 
-  it('renders custom icon with styling for aap node', () => {
+  it('renders a custom icon with AAP styling', () => {
     const view = renderStepIcon(MockStyledIcon, RegistryStepId.AAP_EXECUTION)
     render(<>{view}</>)
 
@@ -45,7 +45,7 @@ describe('renderStepIcon', () => {
     })
   })
 
-  it('renders custom icon with styling for eda trigger node (smaller scale than aap)', () => {
+  it('renders a custom EDA trigger icon at a smaller scale than AAP', () => {
     const view = renderStepIcon(MockStyledIcon, RegistryStepId.TRIGGER_EDA)
     render(<>{view}</>)
 
@@ -60,7 +60,7 @@ describe('renderStepIcon', () => {
     expect(icon.style.transform).toContain('scale(1.4)')
   })
 
-  it('applies rotation transform for logic-condition node', () => {
+  it('rotates the logic-condition step icon', () => {
     const view = renderStepIcon(MockIcon, RegistryStepId.LOGIC_CONDITION)
     render(<>{view}</>)
 
@@ -68,7 +68,7 @@ describe('renderStepIcon', () => {
     expect(iconWrapper).toHaveStyle({ transform: 'rotate(90deg)' })
   })
 
-  it('applies rotation transform for logic-converge node', () => {
+  it('rotates the logic-converge step icon', () => {
     const view = renderStepIcon(MockIcon, RegistryStepId.LOGIC_CONVERGE)
     render(<>{view}</>)
 
@@ -76,7 +76,7 @@ describe('renderStepIcon', () => {
     expect(iconWrapper).toHaveStyle({ transform: 'rotate(90deg)' })
   })
 
-  it('does not apply rotation for regular nodes', () => {
+  it('does not rotate regular step icons', () => {
     const view = renderStepIcon(MockIcon, 'regular-node')
     render(<>{view}</>)
 

@@ -54,7 +54,7 @@ describe('LoopStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders loop node with name', () => {
+    it('renders loop step with name', () => {
       render(<LoopStepComponent {...createNodeProps(baseLoopNode)} />)
 
       expect(screen.getByText('Process Items')).toBeInTheDocument()
@@ -137,7 +137,7 @@ describe('LoopStepComponent', () => {
     })
   })
 
-  describe('Node Structure', () => {
+  describe('Step Structure', () => {
     it('renders with correct structure', () => {
       render(<LoopStepComponent {...createNodeProps(baseLoopNode)} />)
 

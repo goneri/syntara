@@ -50,7 +50,7 @@ describe('ApprovalStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders approval node with all key elements', () => {
+    it('renders approval step with all key elements', () => {
       render(<ApprovalStepComponent {...createNodeProps(baseApprovalNode)} />)
 
       expect(screen.getByText('Approval')).toBeInTheDocument()
@@ -86,7 +86,7 @@ describe('ApprovalStepComponent', () => {
     })
   })
 
-  describe('Node Structure', () => {
+  describe('Step Structure', () => {
     it('renders with correct structure', () => {
       render(<ApprovalStepComponent {...createNodeProps(baseApprovalNode)} />)
 

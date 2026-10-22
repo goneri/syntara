@@ -48,7 +48,7 @@ describe('ConditionStepComponent', () => {
   })
 
   describe('Rendering', () => {
-    it('renders condition node with name', () => {
+    it('renders condition step with name', () => {
       render(<ConditionStepComponent {...createNodeProps(baseConditionNode)} />)
 
       expect(screen.getByText('Check Status')).toBeInTheDocument()
