@@ -149,10 +149,7 @@ export function SynStep(props: {
   const isSelected = props.nodeProps.selected
   const nodeWidth = getSynStepNodeWidth(isSemanticZoom, props.nodeProps)
 
-  const semanticZoomHandleStyle: React.CSSProperties = {
-    top: SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX,
-    transform: 'translateY(-50%)',
-  }
+  const semanticZoomHandleTop = SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX
   const summary = props.semanticZoomSummary
   const mockDataPinned =
     (props.nodeProps.data as { metadata?: { __mockDataPinned?: boolean } }).metadata?.__mockDataPinned === true
@@ -276,7 +273,7 @@ export function SynStep(props: {
         {hasValidationError && <ValidationErrorBadge />}
         <SynStepConnectionHandles
           isSemanticZoom={isSemanticZoom}
-          semanticZoomHandleStyle={semanticZoomHandleStyle}
+          semanticZoomHandleTop={semanticZoomHandleTop}
           disableTarget={props.disableTarget}
           disableSource={props.disableSource}
           enableStart={props.enableStart}

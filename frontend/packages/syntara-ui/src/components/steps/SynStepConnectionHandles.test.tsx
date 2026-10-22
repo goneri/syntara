@@ -31,9 +31,11 @@ function renderHandles(props: ComponentProps<typeof SynStepConnectionHandles>) {
   )
 }
 
+const semanticZoomTop = SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX
+
 describe('SynStepConnectionHandles', () => {
   it('renders default target and source handles', () => {
-    renderHandles({ isSemanticZoom: false, semanticZoomHandleStyle: {} })
+    renderHandles({ isSemanticZoom: false, semanticZoomHandleTop: semanticZoomTop })
     expect(screen.getByTestId('handle-target')).toBeInTheDocument()
     expect(screen.getByTestId('handle-source')).toBeInTheDocument()
   })
@@ -41,7 +43,7 @@ describe('SynStepConnectionHandles', () => {
   it('omits handles when disabled', () => {
     renderHandles({
       isSemanticZoom: false,
-      semanticZoomHandleStyle: {},
+      semanticZoomHandleTop: semanticZoomTop,
       disableTarget: true,
       disableSource: true,
     })
@@ -52,7 +54,7 @@ describe('SynStepConnectionHandles', () => {
   it('renders optional start and end handles', () => {
     renderHandles({
       isSemanticZoom: false,
-      semanticZoomHandleStyle: {},
+      semanticZoomHandleTop: semanticZoomTop,
       enableStart: true,
       enableEnd: true,
     })
@@ -61,16 +63,23 @@ describe('SynStepConnectionHandles', () => {
   })
 
   it('swaps handle sides when reverseHandles is set', () => {
-    renderHandles({ isSemanticZoom: false, semanticZoomHandleStyle: {}, reverseHandles: true })
+    renderHandles({ isSemanticZoom: false, semanticZoomHandleTop: semanticZoomTop, reverseHandles: true })
     expect(screen.getByTestId('handle-target')).toHaveAttribute('data-handle-pos', 'right')
     expect(screen.getByTestId('handle-source')).toHaveAttribute('data-handle-pos', 'left')
   })
 
-  it('applies semantic zoom vertical offset on connection handles', () => {
+  it('applies semantic zoom edge transforms on connection handles', () => {
     renderHandles({
       isSemanticZoom: true,
-      semanticZoomHandleStyle: { top: SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX, transform: 'translateY(-50%)' },
+      semanticZoomHandleTop: semanticZoomTop,
     })
-    expect(screen.getByTestId('handle-target')).toHaveStyle({ top: `${SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX}px` })
+    expect(screen.getByTestId('handle-target')).toHaveStyle({
+      top: `${SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX}px`,
+      transform: 'translate(-50%, -50%)',
+    })
+    expect(screen.getByTestId('handle-source')).toHaveStyle({
+      top: `${SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX}px`,
+      transform: 'translate(50%, -50%)',
+    })
   })
 })

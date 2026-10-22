@@ -131,10 +131,7 @@ export function SynStepSemanticZoomBody(props: {
             />
           </Flex>
         ) : null}
-        <SemanticZoomBranchSourceHandles
-          handles={props.branchSources ?? []}
-          tileHeightPx={SEMANTIC_ZOOM_TILE_SIZE_PX}
-        />
+        <SemanticZoomBranchSourceHandles handles={props.branchSources ?? []} />
       </div>
     </div>
   )

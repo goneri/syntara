@@ -5,7 +5,8 @@ import { sourceHandleStyle, targetHandleStyle } from '../../routes/workflows/can
 
 export type SynStepConnectionHandlesProps = {
   isSemanticZoom: boolean
-  semanticZoomHandleStyle: CSSProperties
+  /** Vertical anchor for semantic-zoom handles (tile center when the node is tile-sized). */
+  semanticZoomHandleTop: CSSProperties['top']
   disableTarget?: boolean
   disableSource?: boolean
   enableStart?: boolean
@@ -13,10 +14,24 @@ export type SynStepConnectionHandlesProps = {
   reverseHandles?: boolean
 }
 
+function semanticZoomHandleStyle(
+  base: CSSProperties,
+  side: 'left' | 'right',
+  top: CSSProperties['top']
+): CSSProperties {
+  return {
+    ...base,
+    top,
+    transform: side === 'left' ? 'translate(-50%, -50%)' : 'translate(50%, -50%)',
+  }
+}
+
 export function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandlesProps>) {
-  const handleStyle = props.isSemanticZoom
-    ? (base: CSSProperties) => ({ ...base, ...props.semanticZoomHandleStyle })
-    : (base: CSSProperties) => base
+  const withSemanticZoom = (base: CSSProperties, side: 'left' | 'right') =>
+    props.isSemanticZoom ? semanticZoomHandleStyle(base, side, props.semanticZoomHandleTop) : base
+
+  const targetSide = props.reverseHandles ? 'right' : 'left'
+  const sourceSide = props.reverseHandles ? 'left' : 'right'
 
   return (
     <>
@@ -25,7 +40,7 @@ export function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandle
           type="target"
           id="target"
           position={props.reverseHandles ? Position.Right : Position.Left}
-          style={handleStyle(targetHandleStyle)}
+          style={withSemanticZoom(targetHandleStyle, targetSide)}
         />
       )}
       {!props.disableSource && (
@@ -33,7 +48,7 @@ export function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandle
           type="source"
           id="source"
           position={props.reverseHandles ? Position.Left : Position.Right}
-          style={handleStyle(sourceHandleStyle)}
+          style={withSemanticZoom(sourceHandleStyle, sourceSide)}
         />
       )}
       {props.enableStart && (
@@ -41,7 +56,10 @@ export function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandle
           type="source"
           id="start"
           position={Position.Right}
-          style={{ ...handleStyle(sourceHandleStyle), top: '85%' }}
+          style={{
+            ...withSemanticZoom(sourceHandleStyle, 'right'),
+            top: '85%',
+          }}
         />
       )}
       {props.enableEnd && (
@@ -50,8 +68,8 @@ export function SynStepConnectionHandles(props: Readonly<SynStepConnectionHandle
           id="end"
           position={Position.Left}
           style={{
-            ...handleStyle(targetHandleStyle),
-            top: '50%',
+            ...withSemanticZoom(targetHandleStyle, 'left'),
+            top: props.isSemanticZoom ? props.semanticZoomHandleTop : '50%',
             opacity: 0,
             pointerEvents: 'none',
           }}

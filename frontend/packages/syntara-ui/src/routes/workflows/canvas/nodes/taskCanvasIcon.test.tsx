@@ -41,7 +41,7 @@ describe('getTaskCanvasIcon', () => {
       parameters: { language: 'python', code: 'print(1)' },
     })
     render(<>{getTaskCanvasIcon(data, 'var(--pf-t--global--color--nonstatus--purple--300)', 'semanticZoom')}</>)
-    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
+    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
   })
 
   it('falls back to task type when executor metadata is missing', () => {
