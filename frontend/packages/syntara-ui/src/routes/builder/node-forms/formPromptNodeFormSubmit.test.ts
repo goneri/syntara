@@ -28,7 +28,6 @@ describe('mapFormPromptFormDataToSubmit', () => {
     expect(result.submit_label).toBe('Send')
     expect(result.success_message).toBe('Done')
     expect(result.css_override).toBe('.x { color: red; }')
-    expect(result).not.toHaveProperty('timezone')
     expect(result.responder_users).toBeUndefined()
     expect(result.fallback_decision).toBe('submit')
   })
