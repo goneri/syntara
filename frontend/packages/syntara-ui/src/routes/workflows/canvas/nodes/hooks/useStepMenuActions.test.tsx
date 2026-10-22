@@ -55,7 +55,7 @@ describe('useStepMenuActions', () => {
   })
 
   describe('without StepActionsContext (outside builder)', () => {
-    it('returns only delete action for activity nodes', () => {
+    it('returns only the delete action for activity steps', () => {
       const { result } = renderHook(() =>
         useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY })
       )
@@ -65,7 +65,7 @@ describe('useStepMenuActions', () => {
       expect(result.current[0].variant).toBe('danger')
     })
 
-    it('returns only delete action for trigger nodes', () => {
+    it('returns only the delete action for trigger steps', () => {
       const { result } = renderHook(() =>
         useStepMenuActions({ nodeId: 'trigger-0', stepCategory: StepMenuCategory.TRIGGER, triggerIndex: 0 })
       )
@@ -74,7 +74,7 @@ describe('useStepMenuActions', () => {
       expect(result.current[0].label).toBe('Delete')
     })
 
-    it('calls deleteElements with correct node id for activity node', () => {
+    it('deletes the activity step by its canvas ID', () => {
       const { result } = renderHook(() =>
         useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY })
       )
@@ -101,7 +101,7 @@ describe('useStepMenuActions', () => {
       })
     })
 
-    it('calls deleteElements with trigger node id format', () => {
+    it('deletes a trigger step by its canvas ID', () => {
       const { result } = renderHook(() =>
         useStepMenuActions({ nodeId: 'trigger-0', stepCategory: StepMenuCategory.TRIGGER, triggerIndex: 0 })
       )
@@ -113,7 +113,7 @@ describe('useStepMenuActions', () => {
       expect(mockDeleteElements).toHaveBeenCalledWith({ nodes: [{ id: 'trigger-0' }] })
     })
 
-    it('uses triggerIndex to construct node id for triggers', () => {
+    it('uses triggerIndex to construct the trigger step ID', () => {
       const { result } = renderHook(() =>
         useStepMenuActions({ nodeId: 'some-other-id', stepCategory: StepMenuCategory.TRIGGER, triggerIndex: 2 })
       )
@@ -126,8 +126,8 @@ describe('useStepMenuActions', () => {
     })
   })
 
-  describe('with StepActionsContext (inside builder) — activity nodes', () => {
-    it('returns view details, run step, disable, duplicate, replace, delete for activity nodes', () => {
+  describe('with StepActionsContext (inside builder) — activity steps', () => {
+    it('returns view details, run, disable, duplicate, replace, and delete for activity steps', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY }),
         {
@@ -139,7 +139,7 @@ describe('useStepMenuActions', () => {
       expect(labels).toEqual(['View step details', 'Run step', 'Disable', 'Duplicate', 'Replace', '', 'Delete'])
     })
 
-    it('calls onViewDetails with the node id', () => {
+    it('calls onViewDetails with the step ID', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY }),
         {
@@ -172,7 +172,7 @@ describe('useStepMenuActions', () => {
       expect(mockOnRunStep).toHaveBeenCalledWith('task-1')
     })
 
-    it('calls onReplace with the node id', () => {
+    it('calls onReplace with the step ID', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY }),
         {
@@ -246,8 +246,8 @@ describe('useStepMenuActions', () => {
     })
   })
 
-  describe('with StepActionsContext — trigger nodes', () => {
-    it('returns view details and delete but NOT run step, duplicate, or replace for trigger nodes', () => {
+  describe('with StepActionsContext — trigger steps', () => {
+    it('returns view details and delete but NOT run, duplicate, or replace for trigger steps', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'trigger-0', stepCategory: StepMenuCategory.TRIGGER, triggerIndex: 0 }),
         { wrapper: withNodeActions(defaultNodeActions) }
@@ -262,8 +262,8 @@ describe('useStepMenuActions', () => {
     })
   })
 
-  describe('with StepActionsContext — control flow nodes', () => {
-    it('returns only replace and delete for control flow nodes', () => {
+  describe('with StepActionsContext — control flow steps', () => {
+    it('returns only replace and delete for control flow steps', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'condition-1', stepCategory: StepMenuCategory.CONTROL_FLOW }),
         { wrapper: withNodeActions(defaultNodeActions) }
@@ -273,7 +273,7 @@ describe('useStepMenuActions', () => {
       expect(labels).toEqual(['Replace', '', 'Delete'])
     })
 
-    it('does not include view details, run step, duplicate, or disable for control flow nodes', () => {
+    it('omits view details, run, duplicate, and disable for control flow steps', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'loop-1', stepCategory: StepMenuCategory.CONTROL_FLOW }),
         { wrapper: withNodeActions(defaultNodeActions) }
@@ -288,7 +288,7 @@ describe('useStepMenuActions', () => {
   })
 
   describe('disable toggle', () => {
-    it('shows "Disable" label when node is not disabled', () => {
+    it('shows "Disable" when the step is enabled', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY, disabled: false }),
         { wrapper: withNodeActions(defaultNodeActions) }
@@ -298,7 +298,7 @@ describe('useStepMenuActions', () => {
       expect(toggle?.label).toBe('Disable')
     })
 
-    it('shows "Enable" label when node is disabled', () => {
+    it('shows "Enable" when the step is disabled', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY, disabled: true }),
         { wrapper: withNodeActions(defaultNodeActions) }
@@ -308,7 +308,7 @@ describe('useStepMenuActions', () => {
       expect(toggle?.label).toBe('Enable')
     })
 
-    it('calls onToggleDisabled with node id when clicked', () => {
+    it('calls onToggleDisabled with the step ID', () => {
       const { result } = renderHook(
         () => useStepMenuActions({ nodeId: 'task-1', stepCategory: StepMenuCategory.ACTIVITY }),
         {

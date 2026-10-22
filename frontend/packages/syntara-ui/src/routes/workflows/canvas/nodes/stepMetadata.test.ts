@@ -8,41 +8,41 @@ import { executorMetadata, stepMetadata, type StepMetadata } from './stepMetadat
 
 describe('stepMetadata', () => {
   describe('step types', () => {
-    it('has metadata for trigger node', () => {
+    it('has metadata for trigger step', () => {
       expect(stepMetadata.trigger).toBeDefined()
       expect(stepMetadata.trigger.label).toBe('Trigger')
       expect(stepMetadata.trigger.disableTarget).toBe(true)
       expect(stepMetadata.trigger.expandable).toBe(false)
     })
 
-    it('has metadata for scheduledTrigger node', () => {
+    it('has metadata for scheduled trigger step', () => {
       expect(stepMetadata.scheduledTrigger).toBeDefined()
       expect(stepMetadata.scheduledTrigger.label).toBe('Trigger')
       expect(stepMetadata.scheduledTrigger.disableTarget).toBe(true)
       expect(stepMetadata.scheduledTrigger.expandable).toBe(false)
     })
 
-    it('has metadata for task node', () => {
+    it('has metadata for task step', () => {
       expect(stepMetadata.task).toBeDefined()
       expect(stepMetadata.task.label).toBe('Task')
       expect(stepMetadata.task.expandable).toBe(true)
     })
 
-    it('has metadata for condition node', () => {
+    it('has metadata for condition step', () => {
       expect(stepMetadata.condition).toBeDefined()
       expect(stepMetadata.condition.label).toBe('Condition')
       expect(stepMetadata.condition.expandable).toBe(false)
       expect(stepMetadata.condition.icon).toBeDefined()
     })
 
-    it('has metadata for approval node', () => {
+    it('has metadata for approval step', () => {
       expect(stepMetadata.approval).toBeDefined()
       expect(stepMetadata.approval.label).toBe('Approval')
       expect(stepMetadata.approval.expandable).toBe(false)
       expect(stepMetadata.approval.icon).toBeDefined()
     })
 
-    it('has metadata for loop node', () => {
+    it('has metadata for loop step', () => {
       expect(stepMetadata.loop).toBeDefined()
       expect(stepMetadata.loop.label).toBe('Loop')
       expect(stepMetadata.loop.enableEnd).toBe(true)
@@ -50,7 +50,7 @@ describe('stepMetadata', () => {
       expect(stepMetadata.loop.icon).toBeDefined()
     })
 
-    it('has metadata for converge node', () => {
+    it('has metadata for converge step', () => {
       expect(stepMetadata.converge).toBeDefined()
       expect(stepMetadata.converge.label).toBe('Converge')
       expect(stepMetadata.converge.expandable).toBe(false)
@@ -58,7 +58,7 @@ describe('stepMetadata', () => {
     })
   })
 
-  describe('node metadata structure', () => {
+  describe('step metadata structure', () => {
     it('all step types have required label field', () => {
       Object.entries(stepMetadata).forEach(([, metadata]) => {
         expect(metadata.label).toBeDefined()
@@ -73,15 +73,15 @@ describe('stepMetadata', () => {
       })
     })
 
-    it('trigger nodes disable target handle', () => {
+    it('trigger steps disable the target handle', () => {
       expect(stepMetadata.trigger.disableTarget).toBe(true)
       expect(stepMetadata.scheduledTrigger.disableTarget).toBe(true)
     })
 
-    it('only loop node enables end handle', () => {
-      const nodesWithEnableEnd = Object.entries(stepMetadata).filter(([, metadata]) => metadata.enableEnd === true)
-      expect(nodesWithEnableEnd).toHaveLength(1)
-      expect(nodesWithEnableEnd[0][0]).toBe('loop')
+    it('only the loop step enables the end handle', () => {
+      const stepsWithEnableEnd = Object.entries(stepMetadata).filter(([, metadata]) => metadata.enableEnd === true)
+      expect(stepsWithEnableEnd).toHaveLength(1)
+      expect(stepsWithEnableEnd[0][0]).toBe('loop')
     })
   })
 
