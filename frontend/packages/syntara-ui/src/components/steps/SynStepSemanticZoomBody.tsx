@@ -53,8 +53,7 @@ export function SynStepSemanticZoomBody(props: {
   const tileClassName = [
     styles.tile,
     props.hasDashedBorder && !props.selected ? styles.tileDashed : '',
-    props.selected && !props.hasDashedBorder ? styles.tileSelected : '',
-    props.selected && props.hasDashedBorder ? styles.tileSelected : '',
+    props.selected ? styles.tileSelected : '',
   ]
     .filter(Boolean)
     .join(' ')

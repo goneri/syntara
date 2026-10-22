@@ -37,8 +37,9 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--pf-t--global--border--radius--medium);
-  background-color: var(--pf-t--global--background--color--secondary--default);
-  border-top: 4px solid var(--syn-step-semantic-zoom-accent, transparent);
+  background-color: var(--pf-t--global--background--color--floating--default);
+  box-shadow: var(--pf-t--global--box-shadow--sm);
+  border-top: 6px solid var(--syn-step-semantic-zoom-accent, transparent);
 }
 
 .tileDashed {
@@ -58,11 +59,6 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-.iconSlot :global(.pf-v6-c-icon) {
-  width: 6.5rem;
-  height: 6.5rem;
 }
 
 .actions {

@@ -159,7 +159,7 @@ describe('renderNodeIcon', () => {
     render(<>{view}</>)
 
     const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(2.75)')
+    expect(icon.style.transform).toContain('scale(3.25)')
   })
 
   it('applies semanticZoom scale for eda trigger icon', () => {
@@ -167,7 +167,7 @@ describe('renderNodeIcon', () => {
     render(<>{view}</>)
 
     const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(2.15)')
+    expect(icon.style.transform).toContain('scale(2.65)')
   })
 
   it('applies different custom icon offset for header variant', () => {

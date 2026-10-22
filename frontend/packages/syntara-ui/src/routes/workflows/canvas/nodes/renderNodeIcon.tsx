@@ -11,7 +11,7 @@ type VariantConfig = { size: IconSize; iconSize: IconSize; customIconScale: numb
 /** Scaling config for AAP brand icons (Ansible logo has 1px internal padding in a 38x38 viewBox). */
 const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.8, customIconOffsetY: 0 },
-  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.75, customIconOffsetY: 0 },
+  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 3.25, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.5, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.8, customIconOffsetY: 1 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1.25, customIconOffsetY: 0 },
@@ -20,7 +20,7 @@ const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
 /** Scaling config for EDA brand icon (logo fills the full 36x36 viewBox edge-to-edge, so needs less scaling). */
 const edaVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.4, customIconOffsetY: 0 },
-  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.15, customIconOffsetY: 0 },
+  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.65, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.15, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.4, customIconOffsetY: 0 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1, customIconOffsetY: 0 },
@@ -29,7 +29,7 @@ const edaVariantConfig: Record<NodeIconVariant, VariantConfig> = {
 /** Standard PF icon sizing (no custom scaling). */
 const standardVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1, customIconOffsetY: 0 },
-  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 1.65, customIconOffsetY: 0 },
+  semanticZoom: { size: '2xl', iconSize: '2xl', customIconScale: 2.2, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1, customIconOffsetY: 0 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1, customIconOffsetY: 0 },

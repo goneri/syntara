@@ -22,6 +22,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
 })
 
 import { SynStep } from './SynStep'
+import { SynStepBody } from './SynStepBody'
 import { SynStepExpandedAllContext } from './SynStepExpandedAllContext'
 
 function renderWithFlow(ui: ReactElement) {
@@ -286,16 +287,23 @@ describe('SynStep validation and interaction', () => {
     renderWithFlow(
       <SynStepExpandedAllContext.Provider value={{ expandAllEvent, collapseAllEvent }}>
         <SynStep nodeProps={baseNodeProps} collapsible>
-          <span>Content</span>
+          <SynStepBody>
+            <span>Content</span>
+          </SynStepBody>
         </SynStep>
       </SynStepExpandedAllContext.Provider>
     )
 
+    expect(screen.getByText('Content')).toBeInTheDocument()
+
     act(() => {
-      expandAllEvent.dispatchEvent(new Event('expandAll'))
       collapseAllEvent.dispatchEvent(new Event('collapseAll'))
     })
+    expect(screen.queryByText('Content')).not.toBeInTheDocument()
 
+    act(() => {
+      expandAllEvent.dispatchEvent(new Event('expandAll'))
+    })
     expect(screen.getByText('Content')).toBeInTheDocument()
   })
 

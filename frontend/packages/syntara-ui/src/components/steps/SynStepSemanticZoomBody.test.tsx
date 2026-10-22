@@ -140,6 +140,16 @@ describe('SynStepSemanticZoomBody', () => {
     expect(screen.queryByRole('button', { name: 'Edit Analyze Data' })).not.toBeInTheDocument()
   })
 
+  it('shows tooltip content on hover', async () => {
+    const user = userEvent.setup()
+    renderWithFlow(<SynStepSemanticZoomBody {...baseProps} />)
+
+    await user.hover(screen.getByRole('button', { name: 'Analyze Data, Task Agent' }))
+
+    expect(await screen.findByText('Analyze Data')).toBeInTheDocument()
+    expect(screen.getByText('Task Agent')).toBeInTheDocument()
+  })
+
   it('shows overlay actions when selected without hover', () => {
     renderWithFlow(
       <SynStepSemanticZoomBody
