@@ -78,8 +78,8 @@ function sanitizeFormPromptParameters(parameters: Record<string, unknown>): Reco
  *
  * The backend form_prompt parameterSchema is `additionalProperties: false`, so any key
  * outside the contract makes validate and save fail outright. Strips UI-only fields
- * (e.g. `fallback_behavior`, mapped forward to `fallback_decision`), legacy node-level
- * keys (e.g. `timezone`), and cross-step leftovers from a step that changed type.
+ * (e.g. `fallback_behavior`, mapped forward to `fallback_decision`) and cross-step
+ * leftovers from a step that changed type.
  */
 export function normalizeFormPromptActivityForDefinition(activity: Activity): Activity {
   if (activity.type !== ActivityTypeEnum.FORM_PROMPT) return activity
