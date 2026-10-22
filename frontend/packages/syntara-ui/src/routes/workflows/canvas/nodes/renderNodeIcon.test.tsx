@@ -137,12 +137,12 @@ describe('renderNodeIcon', () => {
     expect(iconWrapper).toHaveClass('pf-m-xl')
   })
 
-  it('uses semanticZoom variant when specified (2xl size)', () => {
+  it('uses semanticZoom variant when specified (3xl size)', () => {
     const view = buildNodeIconView(MockIcon, 'test-node', 'semanticZoom')
     render(<>{view}</>)
 
     const iconWrapper = screen.getByTestId('node-icon-wrapper')
-    expect(iconWrapper).toHaveClass('pf-m-2xl')
+    expect(iconWrapper).toHaveClass('pf-m-3xl')
   })
 
   it('uses semanticZoom scale for standard pf icons', () => {
@@ -150,24 +150,26 @@ describe('renderNodeIcon', () => {
     render(<>{view}</>)
 
     const iconWrapper = screen.getByTestId('node-icon-wrapper')
-    expect(iconWrapper).toHaveClass('pf-m-2xl')
+    expect(iconWrapper).toHaveClass('pf-m-3xl')
     expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
   })
 
-  it('uses semantic zoom mark artwork for aap nodes', () => {
+  it('uses reduced brand svg scaling for aap nodes at semantic zoom', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
     render(<>{view}</>)
 
-    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
-    expect(screen.queryByTestId('styled-icon')).not.toBeInTheDocument()
+    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
+    const icon = screen.getByTestId('styled-icon')
+    expect(icon.style.transform).toContain('scale(0.68)')
   })
 
-  it('uses semantic zoom mark artwork for eda trigger nodes', () => {
+  it('uses reduced brand svg scaling for eda trigger at semantic zoom', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'semanticZoom')
     render(<>{view}</>)
 
-    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-2xl')
-    expect(screen.queryByTestId('styled-icon')).not.toBeInTheDocument()
+    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
+    const icon = screen.getByTestId('styled-icon')
+    expect(icon.style.transform).toContain('scale(0.85)')
   })
 
   it('applies different custom icon offset for header variant', () => {

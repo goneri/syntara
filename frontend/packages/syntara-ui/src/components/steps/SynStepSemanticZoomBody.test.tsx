@@ -159,6 +159,7 @@ describe('SynStepSemanticZoomBody', () => {
       />
     )
     expect(screen.getByRole('button', { name: 'Edit Analyze Data' })).toBeInTheDocument()
+    expect(screen.getByTestId('semantic-zoom-actions')).toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {

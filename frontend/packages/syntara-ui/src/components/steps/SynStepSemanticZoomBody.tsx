@@ -8,7 +8,7 @@ import { useIsExecutionView } from '../../routes/builder/ExecutionViewContext'
 import { useIsVersionView } from '../../routes/builder/VersionViewContext'
 import { SemanticZoomBranchSourceHandles } from '../../routes/workflows/canvas/nodes/common/SemanticZoomBranchSourceHandles'
 import type { NodeMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useNodeMenuActions'
-import { SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../routes/workflows/canvas/semanticZoom'
+import { SEMANTIC_ZOOM_ICON_TILE_RATIO, SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../routes/workflows/canvas/semanticZoom'
 import type { SemanticZoomBranchSource } from '../../routes/workflows/canvas/semanticZoomTypes'
 
 import { SynStepMenu } from './SynStepMenu'
@@ -44,11 +44,6 @@ export function SynStepSemanticZoomBody(props: {
     if (!nodeId) return
     updateNodeInternals(nodeId)
   }, [nodeId, updateNodeInternals, props.branchSources?.length])
-
-  const tileStyle = {
-    '--syn-step-semantic-zoom-tile-size': `${SEMANTIC_ZOOM_TILE_SIZE_PX}px`,
-    '--syn-step-semantic-zoom-accent': props.accentColor,
-  } as CSSProperties
 
   const tileClassName = [
     styles.tile,
@@ -91,7 +86,18 @@ export function SynStepSemanticZoomBody(props: {
   const ariaLabel = `${props.title}, ${props.typeLabel}`
 
   return (
-    <div className={styles.root} style={tileStyle} data-selected={props.selected ? 'true' : 'false'}>
+    // eslint-disable-next-line syntara/prefer-pf-text-components -- layout shell; children are controls and the icon tile, not text content
+    <div
+      className={styles.root}
+      style={
+        {
+          '--syn-step-semantic-zoom-tile-size': `${SEMANTIC_ZOOM_TILE_SIZE_PX}px`,
+          '--syn-step-semantic-zoom-icon-size': `${SEMANTIC_ZOOM_TILE_SIZE_PX * SEMANTIC_ZOOM_ICON_TILE_RATIO}px`,
+          '--syn-step-semantic-zoom-accent': props.accentColor,
+        } as CSSProperties
+      }
+      data-selected={props.selected ? 'true' : 'false'}
+    >
       <div className={styles.tileRegion}>
         <Tooltip content={tooltipContent} position="top">
           <button type="button" aria-label={ariaLabel} className={styles.tooltipTrigger}>
@@ -101,7 +107,7 @@ export function SynStepSemanticZoomBody(props: {
           </button>
         </Tooltip>
         {showActions ? (
-          <Flex className={`${styles.actions} nodrag nopan`}>
+          <Flex className={`${styles.actions} nodrag nopan`} data-testid="semantic-zoom-actions">
             {editAction ? (
               <Button
                 variant="plain"
