@@ -154,22 +154,22 @@ describe('renderNodeIcon', () => {
     expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
   })
 
-  it('uses reduced brand svg scaling for aap nodes at semantic zoom', () => {
+  it('uses 3xl brand svg at semantic zoom without extra custom scale', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
     render(<>{view}</>)
 
     expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
     const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(0.68)')
+    expect(icon.style.transform).toContain('scale(1)')
   })
 
-  it('uses reduced brand svg scaling for eda trigger at semantic zoom', () => {
+  it('uses 3xl eda brand svg at semantic zoom without extra custom scale', () => {
     const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'semanticZoom')
     render(<>{view}</>)
 
     expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
     const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(0.85)')
+    expect(icon.style.transform).toContain('scale(1)')
   })
 
   it('applies different custom icon offset for header variant', () => {

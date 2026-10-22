@@ -62,44 +62,6 @@
   pointer-events: none;
 }
 
-/*
- * PF Icon sizes the SVG from `font-size` on `.pf-v6-c-icon__content`, not the outer box alone.
- * Override the modifier tokens so semantic-zoom glyphs fill the tile like the UX prototype.
- */
-.iconSlot :global(.pf-v6-c-icon),
-.iconSlot :global(.pf-v6-c-icon.pf-m-2xl),
-.iconSlot :global(.pf-v6-c-icon.pf-m-3xl) {
-  --pf-v6-c-icon--Width: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--Height: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-2xl--Width: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-2xl--Height: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-3xl--Width: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-3xl--Height: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon__content--FontSize: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-2xl__content--FontSize: var(--syn-step-semantic-zoom-icon-size);
-  --pf-v6-c-icon--m-3xl__content--FontSize: var(--syn-step-semantic-zoom-icon-size);
-  width: var(--syn-step-semantic-zoom-icon-size);
-  height: var(--syn-step-semantic-zoom-icon-size);
-}
-
-.iconSlot :global(.pf-v6-c-icon__content),
-.iconSlot :global(.pf-v6-c-icon__content.pf-m-2xl),
-.iconSlot :global(.pf-v6-c-icon__content.pf-m-3xl) {
-  font-size: var(--syn-step-semantic-zoom-icon-size);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.iconSlot :global(.pf-v6-c-icon__content svg),
-.iconSlot :global(.pf-v6-c-icon svg) {
-  width: 1em;
-  height: 1em;
-  max-width: 100%;
-  max-height: 100%;
-}
-
 .actions {
   position: absolute;
   top: var(--pf-t--global--spacer--md);
@@ -125,12 +87,12 @@
 
 .actionControl :global(.pf-v6-c-button),
 .actionControl :global(.pf-v6-c-menu-toggle) {
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  min-width: 3.1625rem;
+  min-height: 3.1625rem;
   padding: var(--pf-t--global--spacer--md);
 }
 
-.actionControl :global(.pf-v6-c-menu-toggle svg) {
-  width: var(--pf-t--global--icon--size--xl);
-  height: var(--pf-t--global--icon--size--xl);
+.actionControl :global(svg) {
+  width: calc(var(--pf-t--global--icon--size--xl) * 1.15);
+  height: calc(var(--pf-t--global--icon--size--xl) * 1.15);
 }

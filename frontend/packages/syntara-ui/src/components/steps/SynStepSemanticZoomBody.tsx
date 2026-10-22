@@ -8,7 +8,7 @@ import { useIsExecutionView } from '../../routes/builder/ExecutionViewContext'
 import { useIsVersionView } from '../../routes/builder/VersionViewContext'
 import { SemanticZoomBranchSourceHandles } from '../../routes/workflows/canvas/nodes/common/SemanticZoomBranchSourceHandles'
 import type { NodeMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useNodeMenuActions'
-import { SEMANTIC_ZOOM_ICON_TILE_RATIO, SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../routes/workflows/canvas/semanticZoom'
+import { SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../routes/workflows/canvas/semanticZoom'
 import type { SemanticZoomBranchSource } from '../../routes/workflows/canvas/semanticZoomTypes'
 
 import { SynStepMenu } from './SynStepMenu'
@@ -92,7 +92,6 @@ export function SynStepSemanticZoomBody(props: {
       style={
         {
           '--syn-step-semantic-zoom-tile-size': `${SEMANTIC_ZOOM_TILE_SIZE_PX}px`,
-          '--syn-step-semantic-zoom-icon-size': `${SEMANTIC_ZOOM_TILE_SIZE_PX * SEMANTIC_ZOOM_ICON_TILE_RATIO}px`,
           '--syn-step-semantic-zoom-accent': props.accentColor,
         } as CSSProperties
       }
