@@ -172,6 +172,15 @@ def _validate_field_constraints(inputs: dict[str, Any], type_inputs: dict[str, A
         raise CredentialValidationError(msg)
 
 
+def _is_blank_required_string(field_id: str, value: Any, field_defs: dict[str, Any]) -> bool:  # noqa: ANN401
+    """Return True when a required string field holds only whitespace.
+
+    Scoped to type == "string" so boolean False and numeric 0 remain valid
+    "provided" values, consistent with _validate_field_constraints' _is_provided.
+    """
+    return field_defs.get(field_id, {}).get("type") == "string" and isinstance(value, str) and not value.strip()
+
+
 def _validate_inputs(
     inputs: dict[str, Any],
     type_inputs: dict[str, Any],
@@ -217,7 +226,7 @@ def _validate_inputs(
 
     # Check required fields — only on create (PATCH is partial, missing fields are preserved)
     if not allow_sentinel:
-        provided = {k for k, v in inputs.items() if v is not None}
+        provided = {k for k, v in inputs.items() if v is not None and not _is_blank_required_string(k, v, field_defs)}
         missing = required - provided
         if missing:
             msg = f"Missing required field(s): {', '.join(sorted(missing))}"

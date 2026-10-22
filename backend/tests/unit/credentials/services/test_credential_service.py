@@ -1059,6 +1059,32 @@ class TestValidateInputs:
         with pytest.raises(CredentialValidationError, match="Missing required"):
             _validate_inputs({"token": None}, BEARER_TYPE_INPUTS)
 
+    def test_empty_string_does_not_satisfy_required(self) -> None:
+        with pytest.raises(CredentialValidationError, match="Missing required"):
+            _validate_inputs({"token": ""}, BEARER_TYPE_INPUTS)
+
+    def test_whitespace_only_string_does_not_satisfy_required(self) -> None:
+        with pytest.raises(CredentialValidationError, match="Missing required"):
+            _validate_inputs({"token": "   "}, BEARER_TYPE_INPUTS)
+
+    def test_blank_required_field_reported_among_missing(self) -> None:
+        """A blank required field is named in the error alongside a truly absent one."""
+        with pytest.raises(CredentialValidationError, match="password"):
+            _validate_inputs({"username": "  "}, BASIC_AUTH_TYPE_INPUTS)
+
+    def test_non_blank_string_with_surrounding_whitespace_satisfies_required(self) -> None:
+        # Only whitespace-only values are rejected; a value with meaningful content
+        # plus incidental whitespace is accepted as-is (no trimming/mutation here).
+        _validate_inputs({"token": "  abc  "}, BEARER_TYPE_INPUTS)
+
+    def test_boolean_false_still_satisfies_required(self) -> None:
+        """Blank-string handling must not affect non-string required fields."""
+        boolean_required_inputs = {
+            "fields": [{"id": "verify_ssl", "label": "Verify SSL", "type": "boolean", "secret": False}],
+            "required": ["verify_ssl"],
+        }
+        _validate_inputs({"verify_ssl": False}, boolean_required_inputs)
+
     def test_required_skipped_in_patch_mode(self) -> None:
         # PATCH mode: missing required fields are OK (they're preserved from existing)
         _validate_inputs({}, BEARER_TYPE_INPUTS, allow_sentinel=True)
