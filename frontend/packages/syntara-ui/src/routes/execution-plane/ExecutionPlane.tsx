@@ -35,7 +35,7 @@ function ExecutionPlaneTableContent({ rows }: Readonly<{ rows: ExecutionTarget[]
       <Thead>
         <Tr>
           <Th width={20}>Name</Th>
-          <Th width={20}>Cluster</Th>
+          <Th width={20}>OpenShift Cluster</Th>
           <Th width={15}>Status</Th>
           <Th width={30}>Routing labels</Th>
           <Th width={15}>State</Th>
