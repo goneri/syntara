@@ -4,9 +4,10 @@ This service encapsulates execution-related business logic, separating it from
 HTTP/API concerns in the FastAPI endpoints.
 """
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from time import monotonic
+from typing import TYPE_CHECKING, Any, NamedTuple
 from uuid import UUID, uuid4
 
 import jsonschema
@@ -39,6 +40,7 @@ from syntara.metrics.emission import emit_completion_metrics
 from syntara.metrics.interface_tag import interface_context_var
 from syntara.metrics.types import ComponentLabel, MetricType
 from syntara.workflows.audit.execution_lifecycle import ExecutionAction, ExecutionLifecycleEvent
+from syntara.workflows.audit.form_trigger import FormTriggerSubmittedEvent
 from syntara.workflows.exceptions import (
     ExecutionInTerminalStateError,
     ExecutionNotFoundError,
@@ -83,6 +85,13 @@ if TYPE_CHECKING:
 logger = structlog.stdlib.get_logger(__name__)
 
 MAX_CALLBACK_ERROR_MSG_LENGTH = 500
+
+
+class NormalizedTriggerInput(NamedTuple):
+    """Validated trigger input and bounded form metadata for observability."""
+
+    input_data: dict[str, Any]
+    field_types: list[str] | None
 
 
 async def count_active_executions(session: "AsyncSession") -> int:
@@ -303,7 +312,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         input_data: dict[str, Any],
         *,
         workflow_id: UUID | None = None,
-    ) -> dict[str, Any]:
+    ) -> NormalizedTriggerInput:
         """Validate and normalize a form-trigger submission.
 
         Returns the same cleaned value shape used by form prompt
@@ -340,7 +349,9 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
             raise TriggerValidationError(msg)
 
         try:
-            return validate_form_submission(form_definition, input_data)
+            cleaned_input = validate_form_submission(form_definition, input_data)
+            field_types = sorted({str(field.type) for field in form_definition.fields})
+            return NormalizedTriggerInput(input_data=cleaned_input, field_types=field_types)
         except FormDataValidationError as exc:
             logger.warning(
                 "Form trigger submission validation failed",
@@ -356,7 +367,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         input_data: dict[str, Any],
         *,
         workflow_id: UUID | None = None,
-    ) -> dict[str, Any]:
+    ) -> NormalizedTriggerInput:
         """Validate and normalize trigger input, then enforce its JSONB size limit.
 
         Defaults and normalization can push input over the 1 MiB limit, so
@@ -366,15 +377,55 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         the existing JSON Schema defaults and validation behavior.
         """
         if trigger_node.get("type") == NodeType.FORM_TRIGGER:
-            input_data = ExecutionService._validate_form_trigger_submission(
+            normalized = ExecutionService._validate_form_trigger_submission(
                 trigger_node,
                 input_data,
                 workflow_id=workflow_id,
             )
         else:
             ExecutionService._apply_trigger_schema_defaults(trigger_node, input_data)
+            normalized = NormalizedTriggerInput(input_data=input_data, field_types=None)
 
-        return validate_jsonb_size(input_data, field_name="input_data")
+        return normalized._replace(input_data=validate_jsonb_size(normalized.input_data, field_name="input_data"))
+
+    def _record_form_trigger_submission(
+        self,
+        *,
+        recorder: "MetricsRecorder",
+        submission_started: float,
+        submitted_at: datetime,
+        workflow: Workflow,
+        execution_id: UUID,
+        trigger_node_id: str,
+        field_types: list[str],
+        field_count: int,
+    ) -> None:
+        """Record a committed form-trigger submission's metric and metadata-only events."""
+        # Keep both monotonic reads in this process. Do not derive this latency from the
+        # persisted execution timestamp or Temporal history: those clocks may be on other hosts.
+        try:
+            recorder.record(
+                MetricType.FORM_TRIGGER_SUBMISSION_START,
+                (monotonic() - submission_started) * 1000,
+                unit="ms",
+                component=ComponentLabel.EXECUTION_SERVICE,
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("Failed to record form trigger submission start metric (non-fatal)")
+
+        AuditEventDispatcher.dispatch(
+            FormTriggerSubmittedEvent(
+                workflow_id=workflow.id,
+                workflow_name=workflow.name,
+                execution_id=execution_id,
+                trigger_node_id=trigger_node_id,
+                submitted_by=self.user.id,
+                submitted_at=submitted_at,
+                field_count=field_count,
+                field_types=field_types,
+                principal_type=self.user.__dict__.get("__principal_type__"),
+            )
+        )
 
     async def create_execution(
         self,
@@ -409,6 +460,9 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
             Exception: If Temporal workflow start fails
 
         """
+        submitted_at = datetime.now(UTC)
+        submission_started = monotonic()
+
         logger.info("Creating execution for workflow by user", workflow_id=workflow_id, user_id=self.user.id)
 
         recorder = get_metrics_recorder()
@@ -448,15 +502,34 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         # Step 2: Resolve trigger node and validate/normalize trigger input
         workflow_def = workflow_version.workflow_definition
         trigger_node_id, trigger_node = resolve_trigger_node(workflow_def, trigger_node_id)
-        input_data = self._normalize_trigger_input(trigger_node, input_data, workflow_id=workflow_id)
+        normalized = self._normalize_trigger_input(trigger_node, input_data, workflow_id=workflow_id)
+
+        post_commit_callback: Callable[[Execution], None] | None = None
+        if normalized.field_types is not None:
+            form_field_types = normalized.field_types
+
+            def record_form_trigger_submission(committed_execution: Execution) -> None:
+                self._record_form_trigger_submission(
+                    recorder=recorder,
+                    submission_started=submission_started,
+                    submitted_at=submitted_at,
+                    workflow=workflow,
+                    execution_id=committed_execution.id,
+                    trigger_node_id=trigger_node_id,
+                    field_types=form_field_types,
+                    field_count=len(normalized.input_data),
+                )
+
+            post_commit_callback = record_form_trigger_submission
 
         return await self._start_temporal_and_create_execution(
             workflow=workflow,
             workflow_version=workflow_version,
-            input_data=input_data,
+            input_data=normalized.input_data,
             trigger_node_id=trigger_node_id,
             recorder=recorder,
             component=component,
+            post_commit_callback=post_commit_callback,
         )
 
     async def _start_temporal_and_create_execution(
@@ -469,6 +542,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         recorder: "MetricsRecorder",
         component: ComponentLabel,
         retried_from_execution_id: UUID | None = None,
+        post_commit_callback: Callable[[Execution], None] | None = None,
     ) -> ExecutionRead:
         """Start a Temporal workflow and persist the execution record.
 
@@ -589,6 +663,12 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
                         execution_id=str(execution_id),
                     )
             raise
+
+        if post_commit_callback is not None:
+            try:
+                post_commit_callback(execution)
+            except Exception:  # noqa: BLE001
+                logger.warning("Post-commit execution callback failed (non-fatal)", exc_info=True)
 
         logger.info(
             "Execution created successfully",
@@ -826,7 +906,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
                 test_trigger_node,
                 trigger_inputs,
                 workflow_id=workflow_id,
-            )
+            ).input_data
 
         # Convert PreResolvedNodeOutput objects to dicts for Temporal and metadata
         pre_resolved_dicts = {node_id: output.model_dump() for node_id, output in pre_resolved_nodes.items()}
