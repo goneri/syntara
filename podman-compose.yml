@@ -393,8 +393,9 @@ services:
       retries: 12
       start_period: 20s
 
-  kafka-worker:
-    profiles: [kafka-worker]
+  eventstream-consumer:
+    profiles:
+      - eventstream
     image: ${APP_IMAGE:-localhost/syntara:latest}
     command: [python, -m, syntara.eventstreams.consumer_entrypoint]
     # Longer than the default 20s drain; raise together if the drain is increased.
