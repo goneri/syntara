@@ -409,7 +409,33 @@ describe('useExecutionApprovalPanel', () => {
 
     expect(showError).toHaveBeenCalledWith({
       title: 'Failed to load approval',
-      description: 'Could not fetch approval details. Please try again.',
+      description: 'Could not load approval details. Please try again.',
+    })
+  })
+
+  it('shows permission message when URL approval fetch returns 403', async () => {
+    const { useFetchApprovalForUrlParam } = await import('./useFetchApprovalForUrlParam')
+    const { useAlerts } = await import('../../../providers/alerts')
+    const showError = vi.fn()
+    vi.mocked(useAlerts).mockReturnValueOnce({
+      showError,
+      showSuccess: vi.fn(),
+      showInfo: vi.fn(),
+      showWarning: vi.fn(),
+    } as never)
+
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(mockApproval)
+    mockFetchApprovals.mockRejectedValue({ response: { status: 403 } })
+
+    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=approval-1', makeNodeClick(), undefined))
+
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    expect(showError).toHaveBeenCalledWith({
+      title: 'Failed to load approval',
+      description: 'You do not have permission to view this approval.',
     })
   })
 
@@ -440,7 +466,7 @@ describe('useExecutionApprovalPanel', () => {
 
     expect(showError).toHaveBeenCalledWith({
       title: 'Failed to load approval',
-      description: 'Could not fetch approval details. Please try again.',
+      description: 'Could not load approval details. Please try again.',
     })
   })
 

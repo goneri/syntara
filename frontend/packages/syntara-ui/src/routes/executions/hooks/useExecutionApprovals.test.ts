@@ -261,7 +261,95 @@ describe('useExecutionApprovals', () => {
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith({
         title: 'Failed to load approval',
-        description: 'Network error',
+        description: 'Could not load approval details. Please try again.',
+      })
+    })
+  })
+
+  it('handleNodeClick shows not-found message when fetch returns 404', async () => {
+    const mockFetchApprovals = vi.fn().mockRejectedValue({ response: { status: 404 } })
+    const mockShowError = vi.fn()
+
+    const { useAlerts } = await import('../../../providers/alerts')
+    vi.mocked(useAlerts).mockReturnValue({
+      showInfo: vi.fn(),
+      showError: mockShowError,
+      showAlert: vi.fn(),
+      showSuccess: vi.fn(),
+      showWarning: vi.fn(),
+      dismissAlert: vi.fn(),
+      clearAllAlerts: vi.fn(),
+    })
+
+    const { useFetchPendingApprovals } = await import('./useFetchPendingApprovals')
+    vi.mocked(useFetchPendingApprovals).mockReturnValue({
+      isLoading: false,
+      fetchApprovals: mockFetchApprovals,
+      clear: vi.fn(),
+    })
+
+    const { result } = renderHook(() => useExecutionApprovals('exec-1'))
+
+    const node: ExecutionNode = {
+      id: 'node-1',
+      type: FlowNodeType.APPROVAL,
+      data: {
+        __executionState: { status: ACTIVITY_STATUS.WAITING },
+      },
+    }
+
+    act(() => {
+      result.current.handleNodeClick({} as React.MouseEvent, node)
+    })
+
+    await waitFor(() => {
+      expect(mockShowError).toHaveBeenCalledWith({
+        title: 'Failed to load approval',
+        description: 'This approval is no longer available. It may have been resolved or deleted.',
+      })
+    })
+  })
+
+  it('handleNodeClick shows permission message when fetch returns 403', async () => {
+    const mockFetchApprovals = vi.fn().mockRejectedValue({ response: { status: 403 } })
+    const mockShowError = vi.fn()
+
+    const { useAlerts } = await import('../../../providers/alerts')
+    vi.mocked(useAlerts).mockReturnValue({
+      showInfo: vi.fn(),
+      showError: mockShowError,
+      showAlert: vi.fn(),
+      showSuccess: vi.fn(),
+      showWarning: vi.fn(),
+      dismissAlert: vi.fn(),
+      clearAllAlerts: vi.fn(),
+    })
+
+    const { useFetchPendingApprovals } = await import('./useFetchPendingApprovals')
+    vi.mocked(useFetchPendingApprovals).mockReturnValue({
+      isLoading: false,
+      fetchApprovals: mockFetchApprovals,
+      clear: vi.fn(),
+    })
+
+    const { result } = renderHook(() => useExecutionApprovals('exec-1'))
+
+    const node: ExecutionNode = {
+      id: 'node-1',
+      type: FlowNodeType.APPROVAL,
+      data: {
+        __executionState: { status: ACTIVITY_STATUS.WAITING },
+      },
+    }
+
+    act(() => {
+      result.current.handleNodeClick({} as React.MouseEvent, node)
+    })
+
+    await waitFor(() => {
+      expect(mockShowError).toHaveBeenCalledWith({
+        title: 'Failed to load approval',
+        description: 'You do not have permission to view this approval.',
       })
     })
   })

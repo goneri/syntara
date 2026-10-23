@@ -2,6 +2,7 @@ import type { Approval } from '@syntara/contracts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAlerts } from '../../../providers/alerts'
+import { getApprovalLoadErrorAlert } from '../../approvals/approvalLoadErrors'
 import {
   canvasNodeIdFromApprovalNodeId,
   findApprovalForCanvasNode,
@@ -72,11 +73,8 @@ export function useExecutionApprovalPanel(
         }
         setPanelOpen(true)
       })
-      .catch(() => {
-        showError({
-          title: 'Failed to load approval',
-          description: 'Could not fetch approval details. Please try again.',
-        })
+      .catch((error: unknown) => {
+        showError(getApprovalLoadErrorAlert(error))
       })
   }
 
@@ -128,11 +126,8 @@ export function useExecutionApprovalPanel(
             setPanelOpen(true)
           }
         })
-        .catch(() => {
-          showError({
-            title: 'Failed to load approval',
-            description: 'Could not fetch approval details. Please try again.',
-          })
+        .catch((error: unknown) => {
+          showError(getApprovalLoadErrorAlert(error))
         })
     },
     [fetchApprovals, searchParams, setApprovalsAndIndex, showError]
