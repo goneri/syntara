@@ -34,8 +34,7 @@ logger = structlog.stdlib.get_logger(__name__)
 class FormSchemaSummary(NamedTuple):
     """Field metadata from a form trigger definition, for observability only.
 
-    ``field_count`` is the number of fields in the form definition, not the
-    number of values submitted.
+    ``field_count`` is the number of fields in the form definition.
     """
 
     field_types: list[str]
