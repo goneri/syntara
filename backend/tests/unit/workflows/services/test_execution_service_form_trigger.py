@@ -1,5 +1,6 @@
 """Unit tests for Form Trigger submission validation in the execution service."""
 
+import inspect
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import UUID, uuid4
@@ -17,6 +18,9 @@ from syntara.workflows.exceptions import TriggerValidationError
 from syntara.workflows.models.workflow import Workflow
 from syntara.workflows.models.workflow_version import WorkflowVersion
 from syntara.workflows.services.execution_service import ExecutionService
+from syntara.workflows.services.form_trigger import (
+    record_form_trigger_submission as _real_record_form_trigger_submission,
+)
 
 
 def _field(field_type: str, value_name: str, **overrides: Any) -> dict[str, Any]:  # noqa: ANN401
@@ -33,6 +37,12 @@ def _form_trigger(*fields: dict[str, Any], node_id: str = "form") -> dict[str, A
     }
 
 
+def test_start_temporal_and_create_execution_has_no_form_specific_parameters() -> None:
+    parameters = inspect.signature(ExecutionService._start_temporal_and_create_execution).parameters
+
+    assert not [name for name in parameters if "form" in name]
+
+
 class TestTriggerInputDispatch:
     """Form triggers use form validation; other triggers retain JSON Schema behavior."""
 
@@ -43,8 +53,9 @@ class TestTriggerInputDispatch:
         normalized = ExecutionService._normalize_trigger_input(trigger, submitted)
 
         assert normalized.input_data == {"count": 42.0}
-        assert normalized.field_types == ["number"]
-        assert normalized.field_count == 1
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["number"]
+        assert normalized.form_schema.field_count == 1
         assert submitted == {"count": "42"}
 
     def test_manual_trigger_keeps_json_schema_defaults_in_place(self) -> None:
@@ -63,8 +74,7 @@ class TestTriggerInputDispatch:
         normalized = ExecutionService._normalize_trigger_input(trigger, submitted)
 
         assert normalized.input_data is submitted
-        assert normalized.field_types is None
-        assert normalized.field_count == 0
+        assert normalized.form_schema is None
         assert submitted == {"name": "default-name"}
 
     @pytest.mark.parametrize("trigger_type", ["manual_trigger", "webhook_trigger", "eda_trigger"])
@@ -77,8 +87,7 @@ class TestTriggerInputDispatch:
         )
 
         assert normalized.input_data is submitted
-        assert normalized.field_types is None
-        assert normalized.field_count == 0
+        assert normalized.form_schema is None
         assert submitted == {"untouched": "value"}
 
     def test_form_submission_helper_returns_cleaned_data(self) -> None:
@@ -87,8 +96,9 @@ class TestTriggerInputDispatch:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {"name": "Ada"})
 
         assert normalized.input_data == {"name": "Ada"}
-        assert normalized.field_types == ["text"]
-        assert normalized.field_count == 1
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["text"]
+        assert normalized.form_schema.field_count == 1
 
 
 class TestFormTriggerSubmissionCleaning:
@@ -103,7 +113,8 @@ class TestFormTriggerSubmissionCleaning:
         )
 
         assert normalized.input_data == {"count": 42.0, "contact": "Bob@example.com"}
-        assert normalized.field_types == ["email", "number"]
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["email", "number"]
 
     def test_optional_absent_field_is_omitted(self) -> None:
         trigger = _form_trigger(_field("text", "required", required=True), _field("text", "optional"))
@@ -111,8 +122,9 @@ class TestFormTriggerSubmissionCleaning:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {"required": "value"})
 
         assert normalized.input_data == {"required": "value"}
-        assert normalized.field_types == ["text"]
-        assert normalized.field_count == 2
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["text"]
+        assert normalized.form_schema.field_count == 2
 
     def test_field_count_uses_all_configured_fields_when_values_are_omitted(self) -> None:
         fields = (
@@ -124,8 +136,9 @@ class TestFormTriggerSubmissionCleaning:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {"required": "value"})
 
         assert len(normalized.input_data) == 1
-        assert normalized.field_count == 10
-        assert normalized.field_types == ["text"]
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_count == 10
+        assert normalized.form_schema.field_types == ["text"]
 
     def test_default_is_applied(self) -> None:
         trigger = _form_trigger(_field("text", "name", default="Ada"))
@@ -133,8 +146,9 @@ class TestFormTriggerSubmissionCleaning:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {})
 
         assert normalized.input_data == {"name": "Ada"}
-        assert normalized.field_types == ["text"]
-        assert normalized.field_count == 1
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["text"]
+        assert normalized.form_schema.field_count == 1
 
     def test_date_is_normalized_to_iso_string(self) -> None:
         trigger = _form_trigger(_field("date", "start"))
@@ -142,8 +156,9 @@ class TestFormTriggerSubmissionCleaning:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {"start": {"date": "2026-02-14"}})
 
         assert normalized.input_data == {"start": "2026-02-14"}
-        assert normalized.field_types == ["date"]
-        assert normalized.field_count == 1
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["date"]
+        assert normalized.form_schema.field_count == 1
 
     def test_checkbox_on_is_coerced_to_true(self) -> None:
         trigger = _form_trigger(_field("checkbox", "confirmed"))
@@ -151,7 +166,8 @@ class TestFormTriggerSubmissionCleaning:
         normalized = ExecutionService._validate_form_trigger_submission(trigger, {"confirmed": "on"})
 
         assert normalized.input_data == {"confirmed": True}
-        assert normalized.field_types == ["checkbox"]
+        assert normalized.form_schema is not None
+        assert normalized.form_schema.field_types == ["checkbox"]
 
     def test_submission_input_is_not_mutated(self) -> None:
         trigger = _form_trigger(_field("text", "name"), _field("text", "defaulted", default="default"))
@@ -330,7 +346,7 @@ async def test_create_execution_dispatches_metadata_and_records_metric() -> None
     temporal_service, execution_id = _temporal_service()
     service.temporal_service = temporal_service
     recorder = MetricsRecorder(prometheus_registry=CollectorRegistry())
-    read_model = Mock()
+    read_model = Mock(id=execution_id)
     call_order = Mock()
     call_order.attach_mock(session.commit, "commit")
 
@@ -345,15 +361,15 @@ async def test_create_execution_dispatches_metadata_and_records_metric() -> None
             new_callable=AsyncMock,
             return_value="Workflow Author",
         ),
-        patch.object(service, "_to_read", new_callable=AsyncMock, return_value=read_model),
-        patch.object(
-            service,
-            "_record_form_trigger_submission",
-            wraps=service._record_form_trigger_submission,
-        ) as post_commit_callback,
+        patch.object(service, "_to_read", new_callable=AsyncMock, return_value=read_model) as to_read,
+        patch(
+            "syntara.workflows.services.execution_service.record_form_trigger_submission",
+            wraps=_real_record_form_trigger_submission,
+        ) as submission_record,
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
-        call_order.attach_mock(post_commit_callback, "callback")
+        call_order.attach_mock(to_read, "read_model")
+        call_order.attach_mock(submission_record, "record_submission")
         result = await service.create_execution(
             workflow.id,
             {"name": "Ada"},
@@ -363,9 +379,9 @@ async def test_create_execution_dispatches_metadata_and_records_metric() -> None
     assert result is read_model
     session.commit.assert_awaited_once()
     temporal_service.start_workflow.assert_awaited_once()
-    post_commit_callback.assert_called_once()
+    submission_record.assert_called_once()
     call_names = [entry[0] for entry in call_order.mock_calls]
-    assert call_names.index("commit") < call_names.index("callback")
+    assert call_names.index("commit") < call_names.index("read_model") < call_names.index("record_submission")
 
     form_events = [
         call.args[0] for call in dispatch.call_args_list if isinstance(call.args[0], FormTriggerSubmittedEvent)
@@ -452,9 +468,10 @@ async def test_create_execution_does_not_instrument_when_temporal_start_fails() 
             new_callable=AsyncMock,
             return_value="Workflow Author",
         ),
-        patch.object(
-            service, "_record_form_trigger_submission", wraps=service._record_form_trigger_submission
-        ) as callback,
+        patch(
+            "syntara.workflows.services.execution_service.record_form_trigger_submission",
+            wraps=_real_record_form_trigger_submission,
+        ) as submission_record,
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
         with pytest.raises(RuntimeError, match="Temporal unavailable"):
@@ -462,7 +479,7 @@ async def test_create_execution_does_not_instrument_when_temporal_start_fails() 
 
     temporal_service.start_workflow.assert_awaited_once()
     session.commit.assert_not_awaited()
-    callback.assert_not_called()
+    submission_record.assert_not_called()
     assert not any(isinstance(call.args[0], FormTriggerSubmittedEvent) for call in dispatch.call_args_list)
     assert list(recorder.query(metric_types={MetricType.FORM_TRIGGER_SUBMISSION_START})) == []
 
@@ -487,9 +504,10 @@ async def test_create_execution_does_not_instrument_when_commit_fails() -> None:
             new_callable=AsyncMock,
             return_value="Workflow Author",
         ),
-        patch.object(
-            service, "_record_form_trigger_submission", wraps=service._record_form_trigger_submission
-        ) as callback,
+        patch(
+            "syntara.workflows.services.execution_service.record_form_trigger_submission",
+            wraps=_real_record_form_trigger_submission,
+        ) as submission_record,
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
         with pytest.raises(RuntimeError, match="DB commit failed"):
@@ -498,7 +516,7 @@ async def test_create_execution_does_not_instrument_when_commit_fails() -> None:
     temporal_service.start_workflow.assert_awaited_once()
     temporal_service.cancel_workflow.assert_awaited_once()
     session.commit.assert_awaited_once()
-    callback.assert_not_called()
+    submission_record.assert_not_called()
     assert not any(isinstance(call.args[0], FormTriggerSubmittedEvent) for call in dispatch.call_args_list)
     assert list(recorder.query(metric_types={MetricType.FORM_TRIGGER_SUBMISSION_START})) == []
 
@@ -507,9 +525,9 @@ async def test_create_execution_does_not_instrument_when_commit_fails() -> None:
 async def test_metric_recording_failure_does_not_fail_form_trigger_execution() -> None:
     trigger = _form_trigger(_field("text", "name", required=True))
     service, session, workflow = _service_for_execution(trigger)
-    read_model = Mock()
+    read_model = Mock(id=uuid4())
     recorder = Mock()
-    recorder.record.side_effect = [RuntimeError("metrics unavailable"), None]
+    recorder.record.side_effect = [None, RuntimeError("metrics unavailable")]
 
     with (
         patch("syntara.workflows.services.execution_service.get_metrics_recorder", return_value=recorder),
@@ -530,11 +548,11 @@ async def test_metric_recording_failure_does_not_fail_form_trigger_execution() -
     assert result is read_model
     session.commit.assert_awaited_once()
     assert recorder.record.call_count == 2
-    metric_args, metric_kwargs = recorder.record.call_args_list[0]
+    assert recorder.record.call_args_list[0].args[0] is MetricType.WORKFLOW_STATUS
+    metric_args, metric_kwargs = recorder.record.call_args_list[1]
     assert metric_args[0] is MetricType.FORM_TRIGGER_SUBMISSION_START
     assert isinstance(metric_args[1], float)
     assert metric_kwargs == {"unit": "ms", "component": "execution_service"}
-    assert recorder.record.call_args_list[1].args[0] is MetricType.WORKFLOW_STATUS
     form_events = [
         call.args[0] for call in dispatch.call_args_list if isinstance(call.args[0], FormTriggerSubmittedEvent)
     ]
