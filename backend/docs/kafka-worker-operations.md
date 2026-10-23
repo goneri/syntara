@@ -9,6 +9,30 @@ deferred to M2. This guide covers backend configuration, local compose and runti
 recovery safeguards. Kafka infrastructure, broker ACLs and broker credentials
 remain customer managed; the local broker example is disposable development data.
 
+## Local development
+
+After normal setup has built the backend image, applied migrations and seeders,
+and started PostgreSQL and Temporal, run this from `backend/`:
+
+```bash
+make eventstream-consumer-run
+```
+
+After updating this test branch, run `uv run alembic upgrade head` before starting
+the API or workers. The migration history preserves the earlier test revision
+`cdd536bc1946` and joins it with the parent's `52662dc0e022` revision, so existing
+test databases and fresh databases can reach the same head.
+
+The target loads the backend `.env`, explicitly enables event streams and
+recreates only the `kafka-worker` service using its existing opt-in profile.
+Infrastructure and Temporal workers continue to use `make services-run`.
+Wrap JSON arrays in `.env` in single quotes so `uv --env-file` preserves JSON
+string quotes, for example `APP_INTEGRATION_URL_ALLOWED_HOSTS='["mcp-server","localhost"]'`.
+
+The local service mounts `backend/src`. Rerun the target to load Python edits;
+dependency changes still require `make build-images`. Broker addresses, runtime
+credentials and broker CA certificates come from Integration/Credential records.
+
 ## Configuration contract
 
 `APP_EVENTSTREAM_ENABLED` defaults to `false`. Both local Kafka compose profiles

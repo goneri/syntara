@@ -71,6 +71,20 @@ This project uses `uv` for dependency management and provides a comprehensive Ma
 
 Kafka ingestion runs independently of the API and Temporal execution workers:
 
+After the normal local setup, start its opt-in container from `backend/`:
+
+```bash
+make eventstream-consumer-run
+```
+
+The target loads `.env`, enables the worker, and recreates only `kafka-worker`.
+The local compose service mounts backend source; rerun the target after Python
+edits. Build the backend image before first use and after dependency changes.
+`make services-run` starts infrastructure and Temporal workers separately.
+
+The Python entrypoint is also available for environments with its database,
+signing, encryption and TLS settings configured:
+
 ```bash
 APP_EVENTSTREAM_ENABLED=true uv run python -m syntara.eventstreams.consumer_entrypoint
 ```
@@ -558,6 +572,7 @@ curl 'http://localhost:8000/api/v1/invocations?status=completed'
 | `make build-images` | Build container images (required before first run) |
 | `make install` | Complete setup from scratch |
 | `make dev` | Run development server with auto-reload |
+| `make eventstream-consumer-run` | Start or recreate the local Kafka consumer container |
 | `make test-all` | Run all tests |
 | `make check-migrations` | Validate migrations (chain, heads, pending, round-trip) |
 | `make lint` | Run linting and type checking |
