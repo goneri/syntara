@@ -44,6 +44,7 @@ pytestmark = [pytest.mark.e2e]
 
 _SEGMENT_EVENT_TIMEOUT_SECONDS = 30
 _FIELD_LABEL = "PRIVATE_APPROVAL_REASON_LABEL_97126"
+_OPTIONAL_FIELD_LABEL = "PRIVATE_OPTIONAL_COUNT_LABEL_97126"
 _FIELD_VALUE = "PRIVATE_APPROVAL_REASON_VALUE_97126"
 
 
@@ -95,7 +96,13 @@ class TestFormTriggerTelemetry:
                             "value_name": "reason",
                             "label": _FIELD_LABEL,
                             "required": True,
-                        }
+                        },
+                        {
+                            "type": "number",
+                            "value_name": "optional_count",
+                            "label": _OPTIONAL_FIELD_LABEL,
+                            "required": False,
+                        },
                     ],
                 ),
             )
@@ -119,12 +126,13 @@ class TestFormTriggerTelemetry:
 
         assert properties["workflow_execution_id"] == str(execution_id)
         assert properties["trigger_node_id"] == "form"
-        assert properties["field_count"] == 1
-        assert properties["field_types"] == ["text"]
+        assert properties["field_count"] == 2
+        assert properties["field_types"] == ["number", "text"]
         assert message.get("userId") is None
         for key in ("input_data", "response_data", "submitted_by", "user_id", "username", "email"):
             assert key not in properties
 
         serialized_event = json.dumps(message)
         assert _FIELD_LABEL not in serialized_event
+        assert _OPTIONAL_FIELD_LABEL not in serialized_event
         assert _FIELD_VALUE not in serialized_event

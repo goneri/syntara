@@ -1,7 +1,4 @@
-"""Form-trigger telemetry event models.
-
-Form triggers reject dynamic options, so no dynamic-dropdown property is emitted.
-"""
+"""Form-trigger telemetry event models."""
 
 from sqlmodel import Field
 
@@ -18,6 +15,6 @@ class FormTriggerSubmittedEvent(BaseTelemetryEvent):
     trigger_node_id: str = Field(description="Activity ID of the form trigger node")
     field_count: int = Field(
         ge=0,
-        description=("Number of normalized submitted values, including definition defaults and checkbox defaults"),
+        description="Number of form fields",
     )
     field_types: list[str] = Field(description="Sorted unique field types used in the form")

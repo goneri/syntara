@@ -161,7 +161,7 @@ async def test_form_trigger_submission_emits_metadata_only_audit_event(
     assert event.execution_id == execution_id
     assert event.activity_id == "form"
     assert event.actor_id == test_user.id
-    assert event.structured_data.model_dump()["field_count"] == 4
+    assert event.structured_data.model_dump()["field_count"] == 5
     assert event.structured_data.model_dump()["field_types"] == ["date", "dropdown", "email", "number", "text"]
     exported_payload = event.model_dump_json()
     for submitted_value in (

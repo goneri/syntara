@@ -24,8 +24,7 @@ _SOURCE_COMPONENT = "syntara.workflows"
 class FormTriggerSubmittedEvent:
     """Fired after a form-trigger submission has started and committed an execution.
 
-    ``field_count`` is the number of normalized submitted values, including values
-    supplied by definition defaults and checkbox defaults.
+    ``field_count`` is the number of form fields.
     """
 
     workflow_id: UUID

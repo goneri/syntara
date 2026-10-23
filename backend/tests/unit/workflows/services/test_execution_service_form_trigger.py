@@ -1,9 +1,8 @@
 """Unit tests for Form Trigger submission validation in the execution service."""
 
-from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from prometheus_client import CollectorRegistry
@@ -13,8 +12,8 @@ from syntara.core.models import User
 from syntara.forms.exceptions import FormDataValidationError
 from syntara.metrics.recorder import MetricsRecorder
 from syntara.metrics.types import MetricType
+from syntara.workflows.audit.form_trigger import FormTriggerSubmittedEvent
 from syntara.workflows.exceptions import TriggerValidationError
-from syntara.workflows.models.execution import Execution
 from syntara.workflows.models.workflow import Workflow
 from syntara.workflows.models.workflow_version import WorkflowVersion
 from syntara.workflows.services.execution_service import ExecutionService
@@ -45,6 +44,7 @@ class TestTriggerInputDispatch:
 
         assert normalized.input_data == {"count": 42.0}
         assert normalized.field_types == ["number"]
+        assert normalized.field_count == 1
         assert submitted == {"count": "42"}
 
     def test_manual_trigger_keeps_json_schema_defaults_in_place(self) -> None:
@@ -64,6 +64,7 @@ class TestTriggerInputDispatch:
 
         assert normalized.input_data is submitted
         assert normalized.field_types is None
+        assert normalized.field_count == 0
         assert submitted == {"name": "default-name"}
 
     @pytest.mark.parametrize("trigger_type", ["manual_trigger", "webhook_trigger", "eda_trigger"])
@@ -77,6 +78,7 @@ class TestTriggerInputDispatch:
 
         assert normalized.input_data is submitted
         assert normalized.field_types is None
+        assert normalized.field_count == 0
         assert submitted == {"untouched": "value"}
 
     def test_form_submission_helper_returns_cleaned_data(self) -> None:
@@ -86,6 +88,7 @@ class TestTriggerInputDispatch:
 
         assert normalized.input_data == {"name": "Ada"}
         assert normalized.field_types == ["text"]
+        assert normalized.field_count == 1
 
 
 class TestFormTriggerSubmissionCleaning:
@@ -109,6 +112,20 @@ class TestFormTriggerSubmissionCleaning:
 
         assert normalized.input_data == {"required": "value"}
         assert normalized.field_types == ["text"]
+        assert normalized.field_count == 2
+
+    def test_field_count_uses_all_configured_fields_when_values_are_omitted(self) -> None:
+        fields = (
+            _field("text", "required", required=True),
+            *(_field("text", f"optional_{index}") for index in range(9)),
+        )
+        trigger = _form_trigger(*fields)
+
+        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"required": "value"})
+
+        assert len(normalized.input_data) == 1
+        assert normalized.field_count == 10
+        assert normalized.field_types == ["text"]
 
     def test_default_is_applied(self) -> None:
         trigger = _form_trigger(_field("text", "name", default="Ada"))
@@ -117,6 +134,7 @@ class TestFormTriggerSubmissionCleaning:
 
         assert normalized.input_data == {"name": "Ada"}
         assert normalized.field_types == ["text"]
+        assert normalized.field_count == 1
 
     def test_date_is_normalized_to_iso_string(self) -> None:
         trigger = _form_trigger(_field("date", "start"))
@@ -125,6 +143,7 @@ class TestFormTriggerSubmissionCleaning:
 
         assert normalized.input_data == {"start": "2026-02-14"}
         assert normalized.field_types == ["date"]
+        assert normalized.field_count == 1
 
     def test_checkbox_on_is_coerced_to_true(self) -> None:
         trigger = _form_trigger(_field("checkbox", "confirmed"))
@@ -285,19 +304,18 @@ def _service_for_execution(trigger_node: dict[str, Any]) -> tuple[ExecutionServi
     return service, session, workflow
 
 
-def _successful_start(execution: Mock) -> AsyncMock:
-    """Model the shared start method, invoking an observability hook at commit time."""
-
-    async def start(
-        *,
-        post_commit_callback: Callable[[Execution], None] | None = None,
-        **_kwargs: object,
-    ) -> Mock:
-        if post_commit_callback is not None:
-            post_commit_callback(cast("Execution", execution))
-        return execution
-
-    return AsyncMock(side_effect=start)
+def _temporal_service() -> tuple[Mock, UUID]:
+    """Build a Temporal mock that starts a workflow and returns its execution ID."""
+    execution_id = uuid4()
+    temporal_result = Mock(
+        execution_id=str(execution_id),
+        temporal_workflow_id=f"temporal-{execution_id}",
+        temporal_run_id="run-1",
+    )
+    temporal_service = Mock()
+    temporal_service.start_workflow = AsyncMock(return_value=temporal_result)
+    temporal_service.cancel_workflow = AsyncMock()
+    return temporal_service, execution_id
 
 
 @pytest.mark.asyncio
@@ -308,33 +326,58 @@ async def test_create_execution_dispatches_metadata_and_records_metric() -> None
         _field("number", "defaulted", default=7),
         node_id="form-start",
     )
-    service, _, workflow = _service_for_execution(trigger)
-    execution_id = uuid4()
-    started_execution = Mock(id=execution_id)
+    service, session, workflow = _service_for_execution(trigger)
+    temporal_service, execution_id = _temporal_service()
+    service.temporal_service = temporal_service
     recorder = MetricsRecorder(prometheus_registry=CollectorRegistry())
-    start_execution = _successful_start(started_execution)
+    read_model = Mock()
+    call_order = Mock()
+    call_order.attach_mock(session.commit, "commit")
 
     with (
         patch("syntara.workflows.services.execution_service.get_metrics_recorder", return_value=recorder),
-        patch.object(service, "_start_temporal_and_create_execution", new=start_execution),
+        patch(
+            "syntara.workflows.services.execution_service.get_settings",
+            return_value=Mock(max_concurrent_workflows=0),
+        ),
+        patch(
+            "syntara.workflows.services.execution_service.resolve_user_display_name",
+            new_callable=AsyncMock,
+            return_value="Workflow Author",
+        ),
+        patch.object(service, "_to_read", new_callable=AsyncMock, return_value=read_model),
+        patch.object(
+            service,
+            "_record_form_trigger_submission",
+            wraps=service._record_form_trigger_submission,
+        ) as post_commit_callback,
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
+        call_order.attach_mock(post_commit_callback, "callback")
         result = await service.create_execution(
             workflow.id,
             {"name": "Ada"},
             "form-start",
         )
 
-    assert result is started_execution
-    start_execution.assert_awaited_once()
-    dispatch.assert_called_once()
-    event = dispatch.call_args.args[0]
+    assert result is read_model
+    session.commit.assert_awaited_once()
+    temporal_service.start_workflow.assert_awaited_once()
+    post_commit_callback.assert_called_once()
+    call_names = [entry[0] for entry in call_order.mock_calls]
+    assert call_names.index("commit") < call_names.index("callback")
+
+    form_events = [
+        call.args[0] for call in dispatch.call_args_list if isinstance(call.args[0], FormTriggerSubmittedEvent)
+    ]
+    assert len(form_events) == 1
+    event = form_events[0]
     assert event.workflow_id == workflow.id
     assert event.workflow_name == workflow.name
     assert event.execution_id == execution_id
     assert event.trigger_node_id == "form-start"
     assert event.submitted_by == service.user.id
-    assert event.field_count == 2
+    assert event.field_count == 3
     assert event.field_types == ["number", "text"]
 
     records = list(recorder.query(metric_types={MetricType.FORM_TRIGGER_SUBMISSION_START}))
@@ -390,52 +433,112 @@ async def test_create_execution_does_not_instrument_invalid_form_submission() ->
 
 
 @pytest.mark.asyncio
-async def test_create_execution_does_not_instrument_when_start_or_commit_fails() -> None:
+async def test_create_execution_does_not_instrument_when_temporal_start_fails() -> None:
     trigger = _form_trigger(_field("text", "name", required=True))
-    service, _, workflow = _service_for_execution(trigger)
+    service, session, workflow = _service_for_execution(trigger)
+    temporal_service, _ = _temporal_service()
+    temporal_service.start_workflow.side_effect = RuntimeError("Temporal unavailable")
+    service.temporal_service = temporal_service
     recorder = MetricsRecorder(prometheus_registry=CollectorRegistry())
 
     with (
         patch("syntara.workflows.services.execution_service.get_metrics_recorder", return_value=recorder),
-        patch.object(
-            service,
-            "_start_temporal_and_create_execution",
-            new_callable=AsyncMock,
-            side_effect=RuntimeError("Temporal start or execution commit failed"),
+        patch(
+            "syntara.workflows.services.execution_service.get_settings",
+            return_value=Mock(max_concurrent_workflows=0),
         ),
+        patch(
+            "syntara.workflows.services.execution_service.resolve_user_display_name",
+            new_callable=AsyncMock,
+            return_value="Workflow Author",
+        ),
+        patch.object(
+            service, "_record_form_trigger_submission", wraps=service._record_form_trigger_submission
+        ) as callback,
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
-        with pytest.raises(RuntimeError, match="Temporal start or execution commit failed"):
+        with pytest.raises(RuntimeError, match="Temporal unavailable"):
             await service.create_execution(workflow.id, {"name": "Ada"}, "form")
 
-    dispatch.assert_not_called()
+    temporal_service.start_workflow.assert_awaited_once()
+    session.commit.assert_not_awaited()
+    callback.assert_not_called()
+    assert not any(isinstance(call.args[0], FormTriggerSubmittedEvent) for call in dispatch.call_args_list)
+    assert list(recorder.query(metric_types={MetricType.FORM_TRIGGER_SUBMISSION_START})) == []
+
+
+@pytest.mark.asyncio
+async def test_create_execution_does_not_instrument_when_commit_fails() -> None:
+    trigger = _form_trigger(_field("text", "name", required=True))
+    service, session, workflow = _service_for_execution(trigger)
+    temporal_service, _ = _temporal_service()
+    service.temporal_service = temporal_service
+    session.commit = AsyncMock(side_effect=RuntimeError("DB commit failed"))
+    recorder = MetricsRecorder(prometheus_registry=CollectorRegistry())
+
+    with (
+        patch("syntara.workflows.services.execution_service.get_metrics_recorder", return_value=recorder),
+        patch(
+            "syntara.workflows.services.execution_service.get_settings",
+            return_value=Mock(max_concurrent_workflows=0),
+        ),
+        patch(
+            "syntara.workflows.services.execution_service.resolve_user_display_name",
+            new_callable=AsyncMock,
+            return_value="Workflow Author",
+        ),
+        patch.object(
+            service, "_record_form_trigger_submission", wraps=service._record_form_trigger_submission
+        ) as callback,
+        patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
+    ):
+        with pytest.raises(RuntimeError, match="DB commit failed"):
+            await service.create_execution(workflow.id, {"name": "Ada"}, "form")
+
+    temporal_service.start_workflow.assert_awaited_once()
+    temporal_service.cancel_workflow.assert_awaited_once()
+    session.commit.assert_awaited_once()
+    callback.assert_not_called()
+    assert not any(isinstance(call.args[0], FormTriggerSubmittedEvent) for call in dispatch.call_args_list)
     assert list(recorder.query(metric_types={MetricType.FORM_TRIGGER_SUBMISSION_START})) == []
 
 
 @pytest.mark.asyncio
 async def test_metric_recording_failure_does_not_fail_form_trigger_execution() -> None:
     trigger = _form_trigger(_field("text", "name", required=True))
-    service, _, workflow = _service_for_execution(trigger)
-    execution = Mock(id=uuid4())
+    service, session, workflow = _service_for_execution(trigger)
+    read_model = Mock()
     recorder = Mock()
-    recorder.record.side_effect = RuntimeError("metrics unavailable")
-    start_execution = _successful_start(execution)
+    recorder.record.side_effect = [RuntimeError("metrics unavailable"), None]
 
     with (
         patch("syntara.workflows.services.execution_service.get_metrics_recorder", return_value=recorder),
-        patch.object(service, "_start_temporal_and_create_execution", new=start_execution),
+        patch(
+            "syntara.workflows.services.execution_service.get_settings",
+            return_value=Mock(max_concurrent_workflows=0),
+        ),
+        patch(
+            "syntara.workflows.services.execution_service.resolve_user_display_name",
+            new_callable=AsyncMock,
+            return_value="Workflow Author",
+        ),
+        patch.object(service, "_to_read", new_callable=AsyncMock, return_value=read_model),
         patch("syntara.workflows.services.execution_service.AuditEventDispatcher.dispatch") as dispatch,
     ):
         result = await service.create_execution(workflow.id, {"name": "Ada"}, "form")
 
-    assert result is execution
-    recorder.record.assert_called_once()
-    metric_args, metric_kwargs = recorder.record.call_args
+    assert result is read_model
+    session.commit.assert_awaited_once()
+    assert recorder.record.call_count == 2
+    metric_args, metric_kwargs = recorder.record.call_args_list[0]
     assert metric_args[0] is MetricType.FORM_TRIGGER_SUBMISSION_START
     assert isinstance(metric_args[1], float)
-    assert metric_args[1] >= 0
     assert metric_kwargs == {"unit": "ms", "component": "execution_service"}
-    dispatch.assert_called_once()
+    assert recorder.record.call_args_list[1].args[0] is MetricType.WORKFLOW_STATUS
+    form_events = [
+        call.args[0] for call in dispatch.call_args_list if isinstance(call.args[0], FormTriggerSubmittedEvent)
+    ]
+    assert len(form_events) == 1
 
 
 @pytest.mark.asyncio

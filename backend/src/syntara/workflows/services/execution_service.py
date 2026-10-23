@@ -88,10 +88,11 @@ MAX_CALLBACK_ERROR_MSG_LENGTH = 500
 
 
 class NormalizedTriggerInput(NamedTuple):
-    """Validated trigger input and bounded form metadata for observability."""
+    """Validated trigger input and schema metadata for form-trigger observability."""
 
     input_data: dict[str, Any]
     field_types: list[str] | None
+    field_count: int
 
 
 async def count_active_executions(session: "AsyncSession") -> int:
@@ -351,7 +352,11 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         try:
             cleaned_input = validate_form_submission(form_definition, input_data)
             field_types = sorted({str(field.type) for field in form_definition.fields})
-            return NormalizedTriggerInput(input_data=cleaned_input, field_types=field_types)
+            return NormalizedTriggerInput(
+                input_data=cleaned_input,
+                field_types=field_types,
+                field_count=len(form_definition.fields),
+            )
         except FormDataValidationError as exc:
             logger.warning(
                 "Form trigger submission validation failed",
@@ -384,7 +389,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
             )
         else:
             ExecutionService._apply_trigger_schema_defaults(trigger_node, input_data)
-            normalized = NormalizedTriggerInput(input_data=input_data, field_types=None)
+            normalized = NormalizedTriggerInput(input_data=input_data, field_types=None, field_count=0)
 
         return normalized._replace(input_data=validate_jsonb_size(normalized.input_data, field_name="input_data"))
 
@@ -507,6 +512,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         post_commit_callback: Callable[[Execution], None] | None = None
         if normalized.field_types is not None:
             form_field_types = normalized.field_types
+            form_field_count = normalized.field_count
 
             def record_form_trigger_submission(committed_execution: Execution) -> None:
                 self._record_form_trigger_submission(
@@ -517,7 +523,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
                     execution_id=committed_execution.id,
                     trigger_node_id=trigger_node_id,
                     field_types=form_field_types,
-                    field_count=len(normalized.input_data),
+                    field_count=form_field_count,
                 )
 
             post_commit_callback = record_form_trigger_submission
