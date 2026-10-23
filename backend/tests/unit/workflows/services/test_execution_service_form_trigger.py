@@ -96,12 +96,11 @@ class TestTriggerInputDispatch:
     def test_form_submission_helper_returns_cleaned_data(self) -> None:
         trigger = _form_trigger(_field("text", "name"))
 
-        normalized = validate_form_trigger_submission(trigger, {"name": "Ada"})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {"name": "Ada"})
 
-        assert normalized.input_data == {"name": "Ada"}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["text"]
-        assert normalized.form_schema.field_count == 1
+        assert cleaned_input == {"name": "Ada"}
+        assert form_schema.field_types == ["text"]
+        assert form_schema.field_count == 1
 
 
 class TestFormTriggerSubmissionCleaning:
@@ -110,24 +109,22 @@ class TestFormTriggerSubmissionCleaning:
     def test_number_is_coerced_and_email_domain_normalized(self) -> None:
         trigger = _form_trigger(_field("number", "count"), _field("email", "contact"))
 
-        normalized = validate_form_trigger_submission(
+        cleaned_input, form_schema = validate_form_trigger_submission(
             trigger,
             {"count": "42", "contact": "Bob@Example.COM"},
         )
 
-        assert normalized.input_data == {"count": 42.0, "contact": "Bob@example.com"}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["email", "number"]
+        assert cleaned_input == {"count": 42.0, "contact": "Bob@example.com"}
+        assert form_schema.field_types == ["email", "number"]
 
     def test_optional_absent_field_is_omitted(self) -> None:
         trigger = _form_trigger(_field("text", "required", required=True), _field("text", "optional"))
 
-        normalized = validate_form_trigger_submission(trigger, {"required": "value"})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {"required": "value"})
 
-        assert normalized.input_data == {"required": "value"}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["text"]
-        assert normalized.form_schema.field_count == 2
+        assert cleaned_input == {"required": "value"}
+        assert form_schema.field_types == ["text"]
+        assert form_schema.field_count == 2
 
     def test_field_count_uses_all_configured_fields_when_values_are_omitted(self) -> None:
         fields = (
@@ -136,41 +133,37 @@ class TestFormTriggerSubmissionCleaning:
         )
         trigger = _form_trigger(*fields)
 
-        normalized = validate_form_trigger_submission(trigger, {"required": "value"})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {"required": "value"})
 
-        assert len(normalized.input_data) == 1
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_count == 10
-        assert normalized.form_schema.field_types == ["text"]
+        assert len(cleaned_input) == 1
+        assert form_schema.field_count == 10
+        assert form_schema.field_types == ["text"]
 
     def test_default_is_applied(self) -> None:
         trigger = _form_trigger(_field("text", "name", default="Ada"))
 
-        normalized = validate_form_trigger_submission(trigger, {})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {})
 
-        assert normalized.input_data == {"name": "Ada"}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["text"]
-        assert normalized.form_schema.field_count == 1
+        assert cleaned_input == {"name": "Ada"}
+        assert form_schema.field_types == ["text"]
+        assert form_schema.field_count == 1
 
     def test_date_is_normalized_to_iso_string(self) -> None:
         trigger = _form_trigger(_field("date", "start"))
 
-        normalized = validate_form_trigger_submission(trigger, {"start": {"date": "2026-02-14"}})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {"start": {"date": "2026-02-14"}})
 
-        assert normalized.input_data == {"start": "2026-02-14"}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["date"]
-        assert normalized.form_schema.field_count == 1
+        assert cleaned_input == {"start": "2026-02-14"}
+        assert form_schema.field_types == ["date"]
+        assert form_schema.field_count == 1
 
     def test_checkbox_on_is_coerced_to_true(self) -> None:
         trigger = _form_trigger(_field("checkbox", "confirmed"))
 
-        normalized = validate_form_trigger_submission(trigger, {"confirmed": "on"})
+        cleaned_input, form_schema = validate_form_trigger_submission(trigger, {"confirmed": "on"})
 
-        assert normalized.input_data == {"confirmed": True}
-        assert normalized.form_schema is not None
-        assert normalized.form_schema.field_types == ["checkbox"]
+        assert cleaned_input == {"confirmed": True}
+        assert form_schema.field_types == ["checkbox"]
 
     def test_submission_input_is_not_mutated(self) -> None:
         trigger = _form_trigger(_field("text", "name"), _field("text", "defaulted", default="default"))

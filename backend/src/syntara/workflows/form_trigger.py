@@ -42,24 +42,18 @@ class FormSchemaSummary(NamedTuple):
     field_count: int
 
 
-class NormalizedTriggerInput(NamedTuple):
-    """Validated trigger input, with a form schema summary when applicable."""
-
-    input_data: dict[str, Any]
-    form_schema: FormSchemaSummary | None
-
-
 def validate_form_trigger_submission(
     trigger_node: dict[str, Any],
     input_data: dict[str, Any],
     *,
     workflow_id: UUID | None = None,
-) -> NormalizedTriggerInput:
+) -> tuple[dict[str, Any], FormSchemaSummary]:
     """Validate and normalize a form-trigger submission.
 
-    Returns the same cleaned value shape used by form prompt submissions. Form
-    Triggers additionally reject dynamic options because they have no upstream
-    values from which to resolve them.
+    Returns the cleaned input data and its schema summary. The cleaned values
+    use the same shape as form prompt submissions. Form Triggers additionally
+    reject dynamic options because they have no upstream values from which to
+    resolve them.
     """
     trigger_node_id = trigger_node.get("id")
     validation_context = {
@@ -93,12 +87,9 @@ def validate_form_trigger_submission(
     try:
         cleaned_input = validate_form_submission(form_definition, input_data)
         field_types = sorted({str(field.type) for field in form_definition.fields})
-        return NormalizedTriggerInput(
-            input_data=cleaned_input,
-            form_schema=FormSchemaSummary(
-                field_types=field_types,
-                field_count=len(form_definition.fields),
-            ),
+        return cleaned_input, FormSchemaSummary(
+            field_types=field_types,
+            field_count=len(form_definition.fields),
         )
     except FormDataValidationError as exc:
         logger.warning(

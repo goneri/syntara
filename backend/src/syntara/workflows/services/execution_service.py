@@ -7,7 +7,7 @@ HTTP/API concerns in the FastAPI endpoints.
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from time import monotonic
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 from uuid import UUID, uuid4
 
 import jsonschema
@@ -47,7 +47,7 @@ from syntara.workflows.exceptions import (
     WorkflowNotPublishedError,
 )
 from syntara.workflows.form_trigger import (
-    NormalizedTriggerInput,
+    FormSchemaSummary,
     record_form_trigger_submission,
     validate_form_trigger_submission,
 )
@@ -85,6 +85,13 @@ if TYPE_CHECKING:
 logger = structlog.stdlib.get_logger(__name__)
 
 MAX_CALLBACK_ERROR_MSG_LENGTH = 500
+
+
+class NormalizedTriggerInput(NamedTuple):
+    """Normalized trigger input, with form metadata when applicable."""
+
+    input_data: dict[str, Any]
+    form_schema: FormSchemaSummary | None
 
 
 async def count_active_executions(session: "AsyncSession") -> int:
@@ -314,18 +321,16 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         Form Triggers use their typed form definition. Other trigger types keep
         the existing JSON Schema defaults and validation behavior.
         """
+        form_schema: FormSchemaSummary | None = None
         if trigger_node.get("type") == NodeType.FORM_TRIGGER:
-            normalized = validate_form_trigger_submission(
-                trigger_node,
-                input_data,
-                workflow_id=workflow_id,
+            input_data, form_schema = validate_form_trigger_submission(
+                trigger_node, input_data, workflow_id=workflow_id
             )
         else:
             ExecutionService._apply_trigger_schema_defaults(trigger_node, input_data)
-            normalized = NormalizedTriggerInput(input_data=input_data, form_schema=None)
 
-        validate_jsonb_size(normalized.input_data, field_name="input_data")
-        return normalized
+        input_data = validate_jsonb_size(input_data, field_name="input_data")
+        return NormalizedTriggerInput(input_data=input_data, form_schema=form_schema)
 
     async def create_execution(
         self,
