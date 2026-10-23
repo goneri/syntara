@@ -193,9 +193,10 @@ export default tseslint.config(
       ],
     },
   },
-  // SynLink.tsx wraps TanStack Link for general use. SynPageBreadcrumbs and
-  // HistoryListItemLink import Link directly because SynLink renders a PF6 Button
-  // (wrong for breadcrumb items and stretched list-row overlays).
+  // SynLink.tsx wraps TanStack Link for general use. SynPageBreadcrumbs,
+  // HistoryListItemLink, and masthead logo links import Link directly because
+  // SynLink renders a PF6 Button (wrong for breadcrumb items, list-row overlays,
+  // and MastheadLogo's component prop which expects an anchor wrapper).
   {
     files: [
       '**/components/SynLink.tsx',
