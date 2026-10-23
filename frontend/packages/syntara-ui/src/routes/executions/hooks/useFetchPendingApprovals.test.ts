@@ -104,9 +104,10 @@ describe('useFetchPendingApprovals', () => {
 
   it('throws when refetch resolves with an error (TanStack Query v5)', async () => {
     const apiError = { code: 'AUTHORIZATION_DENIED' }
+    const rejectError = Object.assign(new Error('AUTHORIZATION_DENIED'), apiError)
     mockRefetch.mockImplementation((options?: { throwOnError?: boolean }) => {
       if (options?.throwOnError) {
-        return Promise.reject(apiError)
+        return Promise.reject(rejectError)
       }
       return Promise.resolve({ data: undefined, error: apiError })
     })
@@ -116,7 +117,7 @@ describe('useFetchPendingApprovals', () => {
     })
 
     await act(async () => {
-      await expect(result.current.fetchApprovals()).rejects.toEqual(apiError)
+      await expect(result.current.fetchApprovals()).rejects.toMatchObject(apiError)
     })
   })
 
