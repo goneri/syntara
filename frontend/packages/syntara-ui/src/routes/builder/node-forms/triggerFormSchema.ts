@@ -1,6 +1,7 @@
 import { MissedSchedulePolicyEnum, ScheduleTypeEnum, TriggerTypeEnum, WEBHOOK_TRIGGER_TYPES } from '@syntara/contracts'
 import { z } from 'zod'
 
+import { formDefinitionSchema } from '../../../forms'
 import { safeJSONReviver } from '../../../utils/jsonSafeParse'
 import { parseRepeatingInterval } from '../../../utils/triggerFormatting'
 import { isValidWebhookPath } from '../../../utils/webhookPath'
@@ -32,6 +33,11 @@ const triggerFormSchemaBase = z.object({
   inputSchema: z.string().optional(),
   webhookPath: z.string().optional(),
   authorizedServiceAccountIds: z.array(z.string().uuid()).optional(),
+  form_definition: formDefinitionSchema.optional(),
+  message: z.string().max(2000).optional(),
+  submit_label: z.string().max(64).optional(),
+  success_message: z.string().max(500).optional(),
+  css_override: z.string().max(10000).optional(),
 })
 
 function validateInputSchemaJson(schemaText: string | undefined, ctx: z.RefinementCtx) {
@@ -149,6 +155,17 @@ export const triggerFormSchema = triggerFormSchemaBase.superRefine((data, ctx) =
         code: z.ZodIssueCode.custom,
         message: AUTHORIZED_SERVICE_ACCOUNT_REQUIRED_MESSAGE,
         path: ['authorizedServiceAccountIds'],
+      })
+    }
+  }
+
+  if (data.triggerType === TriggerTypeEnum.FORM_TRIGGER) {
+    const fieldCount = data.form_definition?.fields?.length ?? 0
+    if (fieldCount === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Add at least one form field',
+        path: ['form_definition'],
       })
     }
   }

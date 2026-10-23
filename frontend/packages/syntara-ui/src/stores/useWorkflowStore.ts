@@ -612,6 +612,7 @@ export * from './workflowStoreSelectors'
 // Factory helpers live in workflowFactories.ts and are re-exported here for compatibility.
 export {
   createManualTrigger,
+  createFormTrigger,
   createScheduledTrigger,
   createEventTrigger,
   createWebhookTrigger,

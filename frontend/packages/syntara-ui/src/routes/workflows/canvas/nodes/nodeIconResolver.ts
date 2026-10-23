@@ -53,6 +53,9 @@ export function getCanvasNodeIconDescriptor(
     if (triggerType === TriggerTypeEnum.EDA_TRIGGER) {
       return { icon: nodeMetadata.edaTrigger.icon, id: RegistryNodeId.TRIGGER_EDA }
     }
+    if (triggerType === TriggerTypeEnum.FORM_TRIGGER) {
+      return { icon: nodeMetadata.formTrigger.icon, id: RegistryNodeId.TRIGGER_FORM }
+    }
     return { icon: nodeMetadata.trigger.icon, id: RegistryNodeId.TRIGGER_MANUAL }
   }
 

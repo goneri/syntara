@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RegistryNodeId } from '../../../../constants'
 import {
   createEdaTrigger,
+  createFormTrigger,
   createScheduledTrigger,
   createWebhookTrigger,
   useWorkflowStore,
@@ -34,6 +35,11 @@ vi.mock('../../../../stores/useWorkflowStore', () => ({
   createEdaTrigger: vi.fn(({ id }: { id: string }) => ({
     id,
     type: TriggerTypeEnum.EDA_TRIGGER,
+  })),
+  createFormTrigger: vi.fn(({ id, name }: { id: string; name?: string }) => ({
+    id,
+    name: name ?? 'Form trigger',
+    type: TriggerTypeEnum.FORM_TRIGGER,
   })),
 }))
 
@@ -76,11 +82,11 @@ describe('registerTriggerNode', () => {
     expect(registration?.keywords).toEqual(expect.arrayContaining(['start', 'manual', 'schedule', 'event', 'webhook']))
   })
 
-  it('includes four subtypes: manual, scheduled, webhook, and EDA', () => {
+  it('includes five subtypes: manual, scheduled, webhook, EDA, and form', () => {
     registerTriggerNode()
 
     const registration = NodeRegistry.get(RegistryNodeId.TRIGGER)
-    expect(registration?.subtypes).toHaveLength(4)
+    expect(registration?.subtypes).toHaveLength(5)
 
     const manual = registration?.subtypes?.find((s) => s.id === RegistryNodeId.TRIGGER_MANUAL)
     expect(manual).toBeDefined()
@@ -100,6 +106,44 @@ describe('registerTriggerNode', () => {
     expect(eda).toBeDefined()
     expect(eda?.label).toBe('Event-Driven Ansible trigger')
     expect(eda?.initialData).toEqual({ triggerType: TriggerTypeEnum.EDA_TRIGGER })
+
+    const form = registration?.subtypes?.find((s) => s.id === RegistryNodeId.TRIGGER_FORM)
+    expect(form).toBeDefined()
+    expect(form?.label).toBe('Form trigger')
+    expect(form?.initialData).toEqual({ triggerType: TriggerTypeEnum.FORM_TRIGGER })
+  })
+
+  it('onSubmit creates a form trigger with default id and calls onSuccess', () => {
+    const mockAddTrigger = vi.fn()
+    vi.mocked(useWorkflowStore.getState).mockReturnValue({
+      addTrigger: mockAddTrigger,
+      currentWorkflow: { triggers: [] },
+    } as never)
+
+    registerTriggerNode()
+    const registration = NodeRegistry.get(RegistryNodeId.TRIGGER)
+    const onSuccess = vi.fn()
+    const onError = vi.fn()
+
+    registration?.onSubmit(
+      {
+        name: 'Intake',
+        triggerType: TriggerTypeEnum.FORM_TRIGGER,
+        form_definition: { fields: [{ type: 'text', label: 'Name', value_name: 'name', required: false }] },
+      },
+      onSuccess,
+      onError
+    )
+
+    expect(vi.mocked(createFormTrigger)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'form',
+        name: 'Intake',
+      })
+    )
+    expect(mockAddTrigger).toHaveBeenCalled()
+    expect(onSuccess).toHaveBeenCalled()
+    expect(onError).not.toHaveBeenCalled()
   })
 
   it('onSubmit creates a manual trigger and calls onSuccess', () => {
