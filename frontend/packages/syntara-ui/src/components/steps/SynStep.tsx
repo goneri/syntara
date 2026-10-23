@@ -4,11 +4,11 @@ import type { NodeProps } from '@xyflow/react'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { ExecutionStatusBadge } from '../../routes/builder/components/ExecutionStatusBadge'
-import type { NodeMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useNodeMenuActions'
 import { useSemanticZoom } from '../../routes/workflows/canvas/nodes/hooks/useSemanticZoom'
-import { NODE_TYPE_COLORS } from '../../routes/workflows/canvas/nodeTypeColors'
+import type { StepMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useStepMenuActions'
 import { SEMANTIC_ZOOM_TILE_HANDLE_TOP_PX } from '../../routes/workflows/canvas/semanticZoom'
 import type { SemanticZoomBranchSource } from '../../routes/workflows/canvas/semanticZoomTypes'
+import { STEP_TYPE_COLORS } from '../../routes/workflows/canvas/stepTypeColors'
 import type { ActivityStatus } from '../../routes/workflows/execution/types'
 import { SynPanel } from '../layout/SynPanel'
 
@@ -98,7 +98,7 @@ export function SynStep(props: {
   /** Step icon shown in the semantic zoom tile (same as the detailed header icon). */
   semanticZoomIcon?: React.ReactNode
   /** Kebab menu actions for semantic zoom (Edit uses the view-details action when present). */
-  semanticZoomMenuActions?: readonly NodeMenuAction[]
+  semanticZoomMenuActions?: readonly StepMenuAction[]
   /** Branch source handles at semantic zoom (no labels; stacked on the tile edge) */
   semanticZoomBranchSources?: readonly SemanticZoomBranchSource[]
   /** Optional stable hook for tests (e.g. canvas node root) */
@@ -111,7 +111,7 @@ export function SynStep(props: {
   const hasSemanticZoomSummary = props.semanticZoomSummary !== undefined
   const isSemanticZoom = useSemanticZoom(hasSemanticZoomSummary)
 
-  const semanticFillColor = props.topBarColor ?? NODE_TYPE_COLORS.generic
+  const semanticFillColor = props.topBarColor ?? STEP_TYPE_COLORS.generic
 
   const barRadiusStyle = useMemo(() => {
     const s = props.style

@@ -43,9 +43,9 @@ vi.mock('@xyflow/react', async (importOriginal) => {
   }
 })
 
-vi.mock('./hooks/useNodeMenuActions', () => ({
-  MenuNodeType: { ACTIVITY: 'activity', CONTROL_FLOW: 'control_flow', TRIGGER: 'trigger' },
-  useNodeMenuActions: () => [],
+vi.mock('./hooks/useStepMenuActions', () => ({
+  StepMenuCategory: { ACTIVITY: 'activity', CONTROL_FLOW: 'control_flow', TRIGGER: 'trigger' },
+  useStepMenuActions: () => [],
 }))
 
 vi.mock('./hooks/useLoopIterationCount', () => ({
@@ -61,16 +61,16 @@ vi.mock('../../stores/useExecutionStore', () => ({
     selector({ activityStates: new Map() }),
 }))
 
-import { ApprovalNodeComponent, type ApprovalNode } from './ApprovalNode'
-import { ConditionNodeComponent, type ConditionNode } from './ConditionNode'
-import { ConvergeNodeComponent, type ConvergeNode } from './ConvergeNode'
-import { GenericNodeComponent, type GenericNode } from './GenericNode'
-import { LoopNodeComponent, type LoopNode } from './LoopNode'
-import { SwitchNodeComponent, type SwitchNode } from './SwitchNode'
-import { TaskNodeComponent, type TaskNode } from './TaskNode'
-import { TaskReversedNodeComponent, type TaskReversedNode } from './TaskReversedNode'
-import { TriggerNodeComponent, type TriggerNode } from './TriggerNode'
-import { WaitNodeComponent, type WaitNode } from './WaitNode'
+import { ApprovalStepComponent, type ApprovalNode } from './ApprovalNode'
+import { ConditionStepComponent, type ConditionNode } from './ConditionNode'
+import { ConvergeStepComponent, type ConvergeNode } from './ConvergeNode'
+import { GenericStepComponent, type GenericNode } from './GenericNode'
+import { LoopStepComponent, type LoopNode } from './LoopNode'
+import { SwitchStepComponent, type SwitchNode } from './SwitchNode'
+import { TaskStepComponent, type TaskNode } from './TaskNode'
+import { TaskReversedStepComponent, type TaskReversedNode } from './TaskReversedNode'
+import { TriggerStepComponent, type TriggerNode } from './TriggerNode'
+import { WaitStepComponent, type WaitNode } from './WaitNode'
 
 function castNodeProps<T extends Node>(props: ReturnType<typeof canvasNodeProps>): NodeProps<T> {
   return props as unknown as NodeProps<T>
@@ -111,7 +111,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <ConditionNodeComponent {...castNodeProps<ConditionNode>(canvasNodeProps(data, 'condition', data.id))} />
+        <ConditionStepComponent {...castNodeProps<ConditionNode>(canvasNodeProps(data, 'condition', data.id))} />
       </ReactFlowProvider>
     )
 
@@ -129,7 +129,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <TaskNodeComponent {...castNodeProps<TaskNode>(canvasNodeProps(data, FlowNodeType.TASK, data.id))} />
+        <TaskStepComponent {...castNodeProps<TaskNode>(canvasNodeProps(data, FlowNodeType.TASK, data.id))} />
       </ReactFlowProvider>
     )
 
@@ -147,7 +147,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <GenericNodeComponent {...castNodeProps<GenericNode>(canvasNodeProps(data, FlowNodeType.GENERIC, data.id))} />
+        <GenericStepComponent {...castNodeProps<GenericNode>(canvasNodeProps(data, FlowNodeType.GENERIC, data.id))} />
       </ReactFlowProvider>
     )
 
@@ -164,7 +164,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <LoopNodeComponent {...castNodeProps<LoopNode>(canvasNodeProps(data, 'loop', data.id))} />
+        <LoopStepComponent {...castNodeProps<LoopNode>(canvasNodeProps(data, 'loop', data.id))} />
       </ReactFlowProvider>
     )
 
@@ -187,7 +187,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <SwitchNodeComponent {...castNodeProps<SwitchNode>(canvasNodeProps(data, 'switch', data.id))} />
+        <SwitchStepComponent {...castNodeProps<SwitchNode>(canvasNodeProps(data, 'switch', data.id))} />
       </ReactFlowProvider>
     )
 
@@ -204,7 +204,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <ApprovalNodeComponent {...castNodeProps<ApprovalNode>(canvasNodeProps(data, 'approval', data.id))} />
+        <ApprovalStepComponent {...castNodeProps<ApprovalNode>(canvasNodeProps(data, 'approval', data.id))} />
       </ReactFlowProvider>
     )
 
@@ -221,7 +221,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <WaitNodeComponent {...castNodeProps<WaitNode>(canvasNodeProps(data, 'wait', data.id))} />
+        <WaitStepComponent {...castNodeProps<WaitNode>(canvasNodeProps(data, 'wait', data.id))} />
       </ReactFlowProvider>
     )
 
@@ -237,7 +237,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <TriggerNodeComponent
+        <TriggerStepComponent
           {...castNodeProps<TriggerNode>(canvasNodeProps(data, FlowNodeType.TRIGGER, 'trigger-0'))}
         />
       </ReactFlowProvider>
@@ -256,7 +256,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <TaskReversedNodeComponent
+        <TaskReversedStepComponent
           {...castNodeProps<TaskReversedNode>(canvasNodeProps(data, FlowNodeType.TASK_REVERSED, data.id))}
         />
       </ReactFlowProvider>
@@ -275,7 +275,7 @@ describe('canvas nodes at semantic zoom', () => {
 
     render(
       <ReactFlowProvider>
-        <ConvergeNodeComponent {...castNodeProps<ConvergeNode>(canvasNodeProps(data, 'converge', data.id))} />
+        <ConvergeStepComponent {...castNodeProps<ConvergeNode>(canvasNodeProps(data, 'converge', data.id))} />
       </ReactFlowProvider>
     )
 

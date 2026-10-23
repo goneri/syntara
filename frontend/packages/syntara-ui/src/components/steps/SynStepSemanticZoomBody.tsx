@@ -7,7 +7,7 @@ import { useIsActiveExecution } from '../../routes/builder/ActiveExecutionContex
 import { useIsExecutionView } from '../../routes/builder/ExecutionViewContext'
 import { useIsVersionView } from '../../routes/builder/VersionViewContext'
 import { SemanticZoomBranchSourceHandles } from '../../routes/workflows/canvas/nodes/common/SemanticZoomBranchSourceHandles'
-import type { NodeMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useNodeMenuActions'
+import type { StepMenuAction } from '../../routes/workflows/canvas/nodes/hooks/useStepMenuActions'
 import { SEMANTIC_ZOOM_TILE_SIZE_PX } from '../../routes/workflows/canvas/semanticZoom'
 import type { SemanticZoomBranchSource } from '../../routes/workflows/canvas/semanticZoomTypes'
 
@@ -19,7 +19,7 @@ export function SynStepSemanticZoomBody(props: {
   typeLabel: string
   accentColor: string
   icon?: ReactNode
-  menuActions?: readonly NodeMenuAction[]
+  menuActions?: readonly StepMenuAction[]
   /** Invisible source handles on the tile right edge (branching nodes only). */
   branchSources?: readonly SemanticZoomBranchSource[]
   selected: boolean

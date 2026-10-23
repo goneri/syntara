@@ -1,19 +1,19 @@
 import type { TaskActivity } from '@syntara/contracts'
 import type { ReactNode } from 'react'
 
-import { detectTaskNodeType } from './common/detectTaskNodeType'
-import { getTaskIconDescriptor } from './nodeIconResolver'
-import { executorMetadata } from './nodeMetadata'
-import { renderNodeIcon, type NodeIconVariant } from './renderNodeIcon'
+import { detectTaskExecutorType } from './common/detectTaskExecutorType'
+import { renderStepIcon, type StepIconVariant } from './renderStepIcon'
+import { getTaskIconDescriptor } from './stepIconResolver'
+import { executorMetadata } from './stepMetadata'
 
 /** Canvas icon for a task-shaped step (detailed header or semantic zoom tile). */
 export function getTaskCanvasIcon(
   data: TaskActivity,
   iconColor?: string,
-  variant: NodeIconVariant = 'canvas'
+  variant: StepIconVariant = 'canvas'
 ): ReactNode | undefined {
-  const { actualExecutor } = detectTaskNodeType(data)
+  const { actualExecutor } = detectTaskExecutorType(data)
   const executorMeta = executorMetadata[actualExecutor] ?? executorMetadata[data.type ?? '']
   const { id: iconId } = getTaskIconDescriptor(data)
-  return renderNodeIcon(executorMeta?.icon, iconId, variant, iconColor)
+  return renderStepIcon(executorMeta?.icon, iconId, variant, iconColor)
 }
