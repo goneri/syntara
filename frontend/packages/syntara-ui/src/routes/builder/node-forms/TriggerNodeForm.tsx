@@ -12,12 +12,10 @@ import {
 } from '@patternfly/react-core'
 import { MissedSchedulePolicyEnum, ScheduleTypeEnum, TriggerTypeEnum, WEBHOOK_TRIGGER_TYPES } from '@syntara/contracts'
 import type { ReactNode } from 'react'
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react'
-import type { UseFormReturn } from 'react-hook-form'
+import { useCallback, use, useEffect, useMemo, useState } from 'react'
 import { useFormContext, useWatch } from 'react-hook-form'
 
 import { FieldHelpPopover } from '../../../components/FieldHelpPopover'
-import { createEmptyFormDefinition } from '../../../components/forms/formFieldBuilder/createDefaultField'
 import type { FormDefinitionFieldServerError } from '../../../components/forms/formFieldBuilder/formDefinitionFieldServerError'
 import { ScheduleBuilderFields } from '../../../components/forms/ScheduleBuilderFields'
 import {
@@ -30,13 +28,11 @@ import { SynFormField } from '../../../components/forms/SynFormField'
 import { SynTextField } from '../../../components/forms/SynTextField'
 import { SynSelect } from '../../../components/SynSelect'
 import { useSynForm } from '../../../hooks/useSynForm'
-import { getBrowserTimezone } from '../../../utils/timezoneList'
-import { getDefaultRepeatingInterval } from '../../../utils/triggerFormatting'
-import { generateWebhookPath } from '../../../utils/webhookPath'
 import { NodeEditorAutoSubmitContext, useRegisterAutoSubmit } from '../hooks/useNodeEditorAutoSubmit'
 import { partitionFormTriggerServerValidationErrors } from '../utils/partitionFormTriggerServerValidationErrors'
 import { useIsVersionView } from '../VersionViewContext'
 
+import { buildTriggerFormDefaults } from './buildTriggerFormDefaults'
 import { EdaFields } from './EdaTriggerFields'
 import { FormTriggerConfigurationFields } from './FormTriggerConfigurationFields'
 import { ManualTriggerFields } from './ManualTriggerFields'
@@ -45,6 +41,7 @@ import { NodeFormContainer } from './shared/NodeFormContainer'
 import nodeFormStyles from './shared/nodeFormStyles.module.css'
 import { NodeFormTabsLayout } from './shared/NodeFormTabsLayout'
 import { normalizeWebhookPath, triggerFormSchema, type TriggerFormData } from './triggerFormSchema'
+import { useApplyServerValidationToTriggerForm } from './useApplyServerValidationToTriggerForm'
 import { WebhookFields } from './WebhookTriggerFields'
 
 const executionConflictLabelHelp = (
@@ -56,40 +53,6 @@ const scheduleExpressionLabelHelp = (
 const cronExpressionLabelHelp = <FieldHelpPopover headerContent="Cron expression" helpText={CRON_EXPRESSION_HELP} />
 
 export type { TriggerFormData }
-
-function buildTriggerFormDefaults(initialData?: Partial<TriggerFormData>): TriggerFormData {
-  const values: TriggerFormData = {
-    name: '',
-    triggerType: initialData?.triggerType ?? TriggerTypeEnum.MANUAL_TRIGGER,
-    scheduleType: ScheduleTypeEnum.INTERVAL,
-    interval: '',
-    cron: '',
-    timezone: getBrowserTimezone(),
-    missedSchedulePolicy: MissedSchedulePolicyEnum.SKIP,
-    inputSchema: '',
-    webhookPath: '',
-    form_definition: initialData?.form_definition ?? createEmptyFormDefinition(),
-    message: '',
-    submit_label: '',
-    success_message: '',
-    css_override: '',
-    ...initialData,
-  }
-
-  if (WEBHOOK_TRIGGER_TYPES.has(values.triggerType) && !values.webhookPath) {
-    values.webhookPath = generateWebhookPath()
-  }
-
-  if (
-    values.triggerType === TriggerTypeEnum.SCHEDULED &&
-    values.scheduleType === ScheduleTypeEnum.INTERVAL &&
-    !values.interval?.trim()
-  ) {
-    values.interval = getDefaultRepeatingInterval(values.timezone ?? 'UTC')
-  }
-
-  return values
-}
 
 type TriggerNodeFormProps = Readonly<{
   onSubmit: (data: TriggerFormData) => void
@@ -266,30 +229,6 @@ function ScheduleIntervalFields({
       )}
     </SynFormField>
   )
-}
-
-function useApplyServerValidationToTriggerForm(
-  form: UseFormReturn<TriggerFormData>,
-  serverValidationErrors?: ReadonlyArray<{ fieldPath?: string | null; message: string }>
-) {
-  const previousFieldsRef = useRef<Array<keyof TriggerFormData>>([])
-
-  useEffect(() => {
-    for (const field of previousFieldsRef.current) {
-      form.clearErrors(field)
-    }
-    previousFieldsRef.current = []
-
-    if (!serverValidationErrors?.length) {
-      return
-    }
-
-    const { triggerFieldErrors } = partitionFormTriggerServerValidationErrors(serverValidationErrors)
-    for (const err of triggerFieldErrors) {
-      form.setError(err.field, { message: err.message })
-      previousFieldsRef.current.push(err.field)
-    }
-  }, [form, serverValidationErrors])
 }
 
 // ── Main form fields ─────────────────────────────────────────────────────

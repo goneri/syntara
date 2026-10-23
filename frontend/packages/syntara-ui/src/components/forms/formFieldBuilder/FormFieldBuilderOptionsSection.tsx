@@ -89,10 +89,7 @@ export function FormFieldBuilderOptionsSection({
     <FormGroup
       label="Options source"
       fieldId={`${idPrefix}-options`}
-      labelHelp={formFieldBuilderLabelHelp(
-        staticOnly ? 'optionsSourceStaticOnly' : 'optionsSource',
-        'Options source'
-      )}
+      labelHelp={formFieldBuilderLabelHelp(staticOnly ? 'optionsSourceStaticOnly' : 'optionsSource', 'Options source')}
     >
       {staticOnly ? null : (
         <OptionsSourceToggle
