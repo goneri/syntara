@@ -154,22 +154,30 @@ describe('renderNodeIcon', () => {
     expect(screen.getByTestId('mock-icon')).toBeInTheDocument()
   })
 
-  it('uses 3xl brand svg at semantic zoom without extra custom scale', () => {
-    const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
-    render(<>{view}</>)
+  it('uses semantic zoom brand scale aligned with add-step list variant for aap', () => {
+    const listView = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'list')
+    const zoomView = buildNodeIconView(MockStyledIcon, RegistryNodeId.AAP_EXECUTION, 'semanticZoom')
 
+    const { unmount: unmountList } = render(<>{listView}</>)
+    expect(screen.getByTestId('styled-icon').style.transform).toContain('scale(1.5)')
+    unmountList()
+
+    render(<>{zoomView}</>)
     expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
-    const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(1)')
+    expect(screen.getByTestId('styled-icon').style.transform).toContain('scale(1.5)')
   })
 
-  it('uses 3xl eda brand svg at semantic zoom without extra custom scale', () => {
-    const view = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'semanticZoom')
-    render(<>{view}</>)
+  it('uses semantic zoom brand scale aligned with add-step list variant for eda', () => {
+    const listView = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'list')
+    const zoomView = buildNodeIconView(MockStyledIcon, RegistryNodeId.TRIGGER_EDA, 'semanticZoom')
 
+    const { unmount: unmountList } = render(<>{listView}</>)
+    expect(screen.getByTestId('styled-icon').style.transform).toContain('scale(1.15)')
+    unmountList()
+
+    render(<>{zoomView}</>)
     expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
-    const icon = screen.getByTestId('styled-icon')
-    expect(icon.style.transform).toContain('scale(1)')
+    expect(screen.getByTestId('styled-icon').style.transform).toContain('scale(1.15)')
   })
 
   it('applies different custom icon offset for header variant', () => {

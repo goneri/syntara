@@ -11,7 +11,8 @@ type VariantConfig = { size: IconSize; iconSize: IconSize; customIconScale: numb
 /** Scaling config for AAP brand icons (Ansible logo has 1px internal padding in a 38x38 viewBox). */
 const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.8, customIconOffsetY: 0 },
-  semanticZoom: { size: '3xl', iconSize: '3xl', customIconScale: 1, customIconOffsetY: 0 },
+  // Match Add Step panel (`list` variant) brand scale so AAP marks align with PF icons at 3xl.
+  semanticZoom: { size: '3xl', iconSize: '3xl', customIconScale: 1.5, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.5, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.8, customIconOffsetY: 1 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1.25, customIconOffsetY: 0 },
@@ -20,7 +21,7 @@ const aapVariantConfig: Record<NodeIconVariant, VariantConfig> = {
 /** Scaling config for EDA brand icon (logo fills the full 36x36 viewBox edge-to-edge, so needs less scaling). */
 const edaVariantConfig: Record<NodeIconVariant, VariantConfig> = {
   canvas: { size: 'md', iconSize: 'md', customIconScale: 1.4, customIconOffsetY: 0 },
-  semanticZoom: { size: '3xl', iconSize: '3xl', customIconScale: 1, customIconOffsetY: 0 },
+  semanticZoom: { size: '3xl', iconSize: '3xl', customIconScale: 1.15, customIconOffsetY: 0 },
   list: { size: 'xl', iconSize: 'xl', customIconScale: 1.15, customIconOffsetY: 0 },
   header: { size: 'xl', iconSize: 'xl', customIconScale: 1.4, customIconOffsetY: 0 },
   legend: { size: 'md', iconSize: 'md', customIconScale: 1, customIconOffsetY: 0 },
