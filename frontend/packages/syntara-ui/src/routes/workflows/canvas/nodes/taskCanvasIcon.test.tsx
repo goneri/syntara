@@ -21,7 +21,7 @@ describe('getTaskCanvasIcon', () => {
       parameters: { language: 'python', code: 'print(1)' },
     })
     render(<>{getTaskCanvasIcon(data)}</>)
-    expect(screen.getByTestId('node-icon-wrapper')).toBeInTheDocument()
+    expect(screen.getByTestId('step-icon-wrapper')).toBeInTheDocument()
   })
 
   it('applies accent color on canvas variant when provided', () => {
@@ -31,7 +31,7 @@ describe('getTaskCanvasIcon', () => {
       parameters: { language: 'python', code: 'print(1)' },
     })
     render(<>{getTaskCanvasIcon(data, 'var(--pf-t--global--color--nonstatus--purple--300)')}</>)
-    expect(screen.getByTestId('node-icon-wrapper')).toBeInTheDocument()
+    expect(screen.getByTestId('step-icon-wrapper')).toBeInTheDocument()
   })
 
   it('uses semanticZoom variant sizing when requested', () => {
@@ -41,7 +41,7 @@ describe('getTaskCanvasIcon', () => {
       parameters: { language: 'python', code: 'print(1)' },
     })
     render(<>{getTaskCanvasIcon(data, 'var(--pf-t--global--color--nonstatus--purple--300)', 'semanticZoom')}</>)
-    expect(screen.getByTestId('node-icon-wrapper')).toHaveClass('pf-m-3xl')
+    expect(screen.getByTestId('step-icon-wrapper')).toHaveClass('pf-m-3xl')
   })
 
   it('falls back to task type when executor metadata is missing', () => {
@@ -51,7 +51,7 @@ describe('getTaskCanvasIcon', () => {
       parameters: { method: 'GET', url: 'https://example.com' },
     })
     render(<>{getTaskCanvasIcon(data)}</>)
-    expect(screen.getByTestId('node-icon-wrapper')).toBeInTheDocument()
+    expect(screen.getByTestId('step-icon-wrapper')).toBeInTheDocument()
   })
 
   it('returns undefined when executor metadata has no icon', () => {
