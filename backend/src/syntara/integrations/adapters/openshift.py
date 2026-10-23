@@ -39,6 +39,7 @@ class OpenShiftAdapter:
                 error_type=HealthCheckErrorType.AUTH_FAILURE,
             )
 
+        failure: ValidateResult | None = None
         try:
             async with httpx.AsyncClient(
                 verify=build_integration_httpx_verify(ca_certificate=self._config.ca_certificate),
@@ -55,7 +56,7 @@ class OpenShiftAdapter:
                 username = user_info.get("username") if isinstance(user_info, dict) else None
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
-            return ValidateResult(
+            failure = ValidateResult(
                 success=False,
                 checked_at=checked_at,
                 error=f"OpenShift authentication API returned HTTP {status}",
@@ -64,26 +65,35 @@ class OpenShiftAdapter:
                 ),
             )
         except httpx.TimeoutException:
-            return ValidateResult(
+            failure = ValidateResult(
                 success=False,
                 checked_at=checked_at,
                 error="OpenShift API connection timed out",
                 error_type=HealthCheckErrorType.TIMEOUT,
             )
         except httpx.TransportError:
-            return ValidateResult(
+            failure = ValidateResult(
                 success=False,
                 checked_at=checked_at,
                 error="Unable to connect to OpenShift API",
                 error_type=HealthCheckErrorType.CONNECTION_ERROR,
             )
-        except (TypeError, ValueError, AttributeError):
-            return ValidateResult(
+        except httpx.DecodingError:
+            failure = ValidateResult(
                 success=False,
                 checked_at=checked_at,
                 error="OpenShift authentication API returned an invalid response",
                 error_type=HealthCheckErrorType.CONNECTION_ERROR,
             )
+        except (TypeError, ValueError, AttributeError):
+            failure = ValidateResult(
+                success=False,
+                checked_at=checked_at,
+                error="OpenShift authentication API returned an invalid response",
+                error_type=HealthCheckErrorType.CONNECTION_ERROR,
+            )
+        if failure is not None:
+            return failure
         authenticated = isinstance(username, str) and bool(username) and username != "system:anonymous"
         return ValidateResult(
             success=authenticated,

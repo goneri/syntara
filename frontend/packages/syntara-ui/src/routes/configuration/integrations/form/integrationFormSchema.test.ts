@@ -42,7 +42,7 @@ const validOpenShiftBase = {
   configuration: {
     integration_type: 'openshift' as const,
     base_url: 'https://api.example.com:6443',
-    namespace: 'default',
+    namespace: 'workers',
     ...securityDefaults,
   },
   scope: 'global' as const,
@@ -251,7 +251,7 @@ describe('integrationFormSchema', () => {
       if (result.success) {
         expect(result.data.name).toBe('Prod Cluster')
         expect(result.data.configuration).toHaveProperty('base_url', 'https://api.example.com:6443')
-        expect(result.data.configuration).toHaveProperty('namespace', 'default')
+        expect(result.data.configuration).toHaveProperty('namespace', 'workers')
       }
     })
 
@@ -262,7 +262,7 @@ describe('integrationFormSchema', () => {
         configuration: {
           integration_type: 'openshift' as const,
           base_url: '',
-          namespace: 'default',
+          namespace: 'workers',
           ...securityDefaults,
         },
       })
@@ -313,7 +313,7 @@ describe('integrationFormSchema', () => {
         configuration: {
           integration_type: 'openshift' as const,
           base_url: 'https://api.example.com:6443',
-          namespace: 'default',
+          namespace: 'workers',
           ...securityDefaults,
           allow_http: true,
         },
@@ -331,7 +331,7 @@ describe('integrationFormSchema', () => {
         configuration: {
           integration_type: 'openshift' as const,
           base_url: 'https://api.example.com:6443',
-          namespace: 'default',
+          namespace: 'workers',
           ...securityDefaults,
           insecure_skip_tls_verify: true,
         },
@@ -349,13 +349,35 @@ describe('integrationFormSchema', () => {
         configuration: {
           integration_type: 'openshift' as const,
           base_url: 'http://api.example.com:6443',
-          namespace: 'default',
+          namespace: 'workers',
           ...securityDefaults,
         },
       })
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.issues.some((i) => i.message === 'Must be an HTTPS URL')).toBe(true)
+      }
+    })
+
+    it('explains that cluster URLs cannot include a path, query, or fragment', () => {
+      const result = integrationFormSchema.safeParse({
+        ...validOpenShiftBase,
+        name: 'Cluster',
+        configuration: {
+          ...validOpenShiftBase.configuration,
+          base_url: 'https://api.example.com:6443/apis',
+        },
+      })
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(
+          result.error.issues.some(
+            (issue) =>
+              issue.message ===
+              'Cluster URL must contain only a hostname and optional port (no path, query, or fragment)'
+          )
+        ).toBe(true)
       }
     })
   })
@@ -568,7 +590,7 @@ describe('integrationFormSchema', () => {
         {
           integration_type: 'openshift',
           base_url: '',
-          namespace: 'default',
+          namespace: '',
           insecure_skip_tls_verify: false,
           allow_http: false,
           ca_certificate: null,

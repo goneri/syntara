@@ -49,7 +49,7 @@ function getDefaultFormValues(defaultType: string): IntegrationFormData {
       configuration: {
         integration_type: IntegrationTypeEnum.OPENSHIFT,
         base_url: '',
-        namespace: 'default',
+        namespace: '',
         allow_http: false,
         insecure_skip_tls_verify: false,
         ca_certificate: null,
@@ -219,7 +219,7 @@ describe('IntegrationDetailsStep', () => {
 
       const namespace = screen.getByRole('textbox', { name: /namespace/i })
       expect(namespace).toBeInTheDocument()
-      expect(namespace).toHaveAttribute('placeholder', 'default')
+      expect(namespace).toHaveAttribute('placeholder', 'e.g., syntara-workers')
     })
 
     it('does not show API URL label for OpenShift', () => {

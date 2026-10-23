@@ -104,6 +104,35 @@ async def test_validate_classifies_rejected_token_as_auth_failure(status: int) -
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("status", [404, 500, 502, 503, 504])
+async def test_validate_classifies_api_errors_as_connection_errors(status: int) -> None:
+    response = httpx.Response(status, request=httpx.Request("POST", "https://api.example.com"))
+    _, context = _mock_client(response)
+    with patch("syntara.integrations.adapters.openshift.httpx.AsyncClient", return_value=context):
+        result = await OpenShiftAdapter(_config()).validate({"bearer_token": "secret-token"}, 5)
+
+    assert result.error_type == HealthCheckErrorType.CONNECTION_ERROR
+    assert str(status) in (result.error or "")
+    assert "secret-token" not in (result.error or "")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("content", [b"<html>upstream error</html>", b"\xff\xfe"])
+async def test_validate_sanitizes_non_json_and_non_utf8_responses(content: bytes) -> None:
+    response = httpx.Response(
+        200,
+        content=content,
+        request=httpx.Request("POST", "https://api.example.com"),
+    )
+    _, context = _mock_client(response)
+    with patch("syntara.integrations.adapters.openshift.httpx.AsyncClient", return_value=context):
+        result = await OpenShiftAdapter(_config()).validate({"bearer_token": "secret-token"}, 5)
+
+    assert result.error_type == HealthCheckErrorType.CONNECTION_ERROR
+    assert "secret-token" not in (result.error or "")
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("user_info", [{}, {"username": "system:anonymous"}])
 async def test_validate_rejects_unconfirmed_identity(user_info: dict[str, str]) -> None:
     response = httpx.Response(
@@ -138,6 +167,20 @@ async def test_validate_rejects_malformed_identity_response() -> None:
         result = await OpenShiftAdapter(_config()).validate({"bearer_token": "secret-token"}, 5)
 
     assert result.error_type == HealthCheckErrorType.CONNECTION_ERROR
+    assert "secret-token" not in (result.error or "")
+
+
+@pytest.mark.asyncio
+async def test_validate_sanitizes_response_decoding_error() -> None:
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.side_effect = httpx.DecodingError("upstream response could not be decoded")
+    _, context = _mock_client(response)
+    with patch("syntara.integrations.adapters.openshift.httpx.AsyncClient", return_value=context):
+        result = await OpenShiftAdapter(_config()).validate({"bearer_token": "secret-token"}, 5)
+
+    assert result.error_type == HealthCheckErrorType.CONNECTION_ERROR
+    assert result.error == "OpenShift authentication API returned an invalid response"
     assert "secret-token" not in (result.error or "")
 
 

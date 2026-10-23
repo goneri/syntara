@@ -120,7 +120,11 @@ export const openshiftConfigurationSchema = z
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Must be an HTTPS URL', path: ['base_url'] })
       }
       if (url.username || url.password || (url.pathname !== '/' && url.pathname !== '') || url.search || url.hash) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Use only https://hostname[:port]', path: ['base_url'] })
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Cluster URL must contain only a hostname and optional port (no path, query, or fragment)',
+          path: ['base_url'],
+        })
       }
     } catch {
       // The URL string schema reports malformed URLs.
@@ -195,7 +199,7 @@ export function getDefaultConfiguration(integrationType: string): IntegrationFor
       return {
         integration_type: 'openshift' as const,
         base_url: '',
-        namespace: 'default',
+        namespace: '',
         insecure_skip_tls_verify: false,
         allow_http: false,
         ca_certificate: null,

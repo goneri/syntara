@@ -140,6 +140,7 @@ function EditIntegrationFormFields({
           name="namespace"
           label="Namespace"
           fieldId="edit-namespace"
+          placeholder="e.g., syntara-workers"
           isRequired
           hint="Namespace for future execution workloads"
         />

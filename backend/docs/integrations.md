@@ -236,6 +236,8 @@ Create the integration through the existing `POST /integrations` API with a payl
 
 The `validate` and unsaved `discover` actions ask the cluster to identify the bearer credential through Kubernetes `SelfSubjectReview`. That API returns identity information without persisting a resource. The adapter does not list, create, exec into, or delete pods, and it does not check permissions for future workload operations. Resource refresh is unsupported. Pod lifecycle and workflow routing remain separate follow-up work.
 
+> **Security note:** The connection test verifies the token's identity only; it does not check access to the configured namespace. Before a future workflow activity uses this integration, ensure the service account has the RBAC permissions that activity requires in that namespace.
+
 ## TLS and Security
 
 All adapters, the AAP proxy, and the agent orchestrator share `build_integration_httpx_verify()` (in `src/syntara/core/lib/tls_utils.py`) which maps `IntegrationSecurityMixin` fields to `httpx.AsyncClient` verification:

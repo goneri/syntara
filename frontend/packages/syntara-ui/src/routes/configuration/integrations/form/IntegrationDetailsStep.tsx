@@ -406,7 +406,7 @@ export function IntegrationDetailsStep({ setValue, onTypeChange }: IntegrationDe
             name="configuration.namespace"
             label="Namespace"
             fieldId="namespace"
-            placeholder="default"
+            placeholder="e.g., syntara-workers"
             isRequired
             hint="Namespace for future execution workloads"
           />
