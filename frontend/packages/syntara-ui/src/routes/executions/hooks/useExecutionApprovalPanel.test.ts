@@ -432,7 +432,7 @@ describe('useExecutionApprovalPanel', () => {
     vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(mockApproval))
     mockFetchApprovals.mockRejectedValue({ response: { status: 403 } })
 
-    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=approval-1', makeNodeClick(), undefined))
+    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=approval-1', makeStepClick(), undefined))
 
     await act(async () => {
       await vi.runAllTimersAsync()
@@ -459,7 +459,7 @@ describe('useExecutionApprovalPanel', () => {
       urlApprovalFetchState(undefined, { code: 'APPROVAL_NOT_FOUND' })
     )
 
-    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=missing-approval', makeNodeClick(), undefined))
+    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=missing-approval', makeStepClick(), undefined))
 
     await act(async () => {
       await vi.runAllTimersAsync()
