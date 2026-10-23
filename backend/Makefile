@@ -479,8 +479,8 @@ run-all: _ensure-secrets _ensure-certs ## Start all services (foreground, Ctrl+C
 	$(COMPOSE_FINAL_CMD) up --build --force-recreate
 
 .PHONY: services-run
-services-run: _ensure-secrets _ensure-certs ## Start all services (database + cache + temporal + UI + worker + background-worker + MCP) in background
-	@echo "🚀 Starting all services (database + cache + temporal + UI + worker + background-worker + MCP)..."
+services-run: _ensure-secrets _ensure-certs ## Start infrastructure, Temporal workers, Kafka consumer and MCP in background
+	@echo "🚀 Starting all services (database + cache + temporal + UI + worker + background-worker + Kafka consumer + MCP)..."
 	@echo "📍 Database: postgresql://admin:admin@localhost:$${APP_DB_PORT:-5432}/syntara_api"
 	@echo "📍 Cache: cache://localhost:$${APP_CACHE_PORT:-6379}"
 	@echo "📍 Temporal Server: localhost:$${APP_TEMPORAL_PORT:-7233}"
