@@ -324,7 +324,8 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
             ExecutionService._apply_trigger_schema_defaults(trigger_node, input_data)
             normalized = NormalizedTriggerInput(input_data=input_data, form_schema=None)
 
-        return normalized._replace(input_data=validate_jsonb_size(normalized.input_data, field_name="input_data"))
+        validate_jsonb_size(normalized.input_data, field_name="input_data")
+        return normalized
 
     async def create_execution(
         self,
