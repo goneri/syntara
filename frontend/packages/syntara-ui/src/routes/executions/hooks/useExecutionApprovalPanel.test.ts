@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { useExecutionStore } from '../../workflows/stores/useExecutionStore'
 
 import { useExecutionApprovalPanel } from './useExecutionApprovalPanel'
+import type { UseFetchApprovalForUrlParamResult } from './useFetchApprovalForUrlParam'
 
 vi.mock('../../workflows/stores/useExecutionStore', () => {
   const activityStates = new Map<string, { status: string }>()
@@ -67,8 +68,16 @@ const mockFetchApprovals = vi.fn()
 const mockSetApprovalsAndIndex = vi.fn()
 const mockClearApprovals = vi.fn()
 
+function urlApprovalFetchState(
+  approval?: Approval,
+  error?: unknown,
+  isPending = false
+): UseFetchApprovalForUrlParamResult {
+  return { approval, error, isPending }
+}
+
 vi.mock('./useFetchApprovalForUrlParam', () => ({
-  useFetchApprovalForUrlParam: vi.fn(() => undefined),
+  useFetchApprovalForUrlParam: vi.fn(() => urlApprovalFetchState()),
 }))
 
 vi.mock('./useAutoApprovalDetection', () => ({
@@ -169,7 +178,7 @@ describe('useExecutionApprovalPanel', () => {
 
   it('opens panel when URL approval is fetched', async () => {
     const { useFetchApprovalForUrlParam } = await import('./useFetchApprovalForUrlParam')
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(mockApproval)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(mockApproval))
     mockFetchApprovals.mockResolvedValue([mockApproval])
 
     const { result } = renderHook(() =>
@@ -372,7 +381,7 @@ describe('useExecutionApprovalPanel', () => {
   it('handles URL approval not in fetched list (defaults to first approval)', async () => {
     const { useFetchApprovalForUrlParam } = await import('./useFetchApprovalForUrlParam')
     const urlApproval = { ...mockApproval, id: 'url-approval-not-in-list' }
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApproval)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(urlApproval))
     mockFetchApprovals.mockResolvedValue([mockApproval]) // URL approval not in the fetched list
 
     const { result } = renderHook(() =>
@@ -398,7 +407,7 @@ describe('useExecutionApprovalPanel', () => {
       showWarning: vi.fn(),
     } as never)
 
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(mockApproval)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(mockApproval))
     mockFetchApprovals.mockRejectedValue(new Error('Failed to fetch'))
 
     renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=approval-1', makeNodeClick(), undefined))
@@ -424,7 +433,7 @@ describe('useExecutionApprovalPanel', () => {
       showWarning: vi.fn(),
     } as never)
 
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(mockApproval)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(mockApproval))
     mockFetchApprovals.mockRejectedValue({ response: { status: 403 } })
 
     renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=approval-1', makeNodeClick(), undefined))
@@ -437,6 +446,34 @@ describe('useExecutionApprovalPanel', () => {
       title: 'Failed to load approval',
       description: 'You do not have permission to view this approval.',
     })
+  })
+
+  it('shows not-found message when URL by-id fetch fails with APPROVAL_NOT_FOUND', async () => {
+    const { useFetchApprovalForUrlParam } = await import('./useFetchApprovalForUrlParam')
+    const { useAlerts } = await import('../../../providers/alerts')
+    const showError = vi.fn()
+    vi.mocked(useAlerts).mockReturnValueOnce({
+      showError,
+      showSuccess: vi.fn(),
+      showInfo: vi.fn(),
+      showWarning: vi.fn(),
+    } as never)
+
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(
+      urlApprovalFetchState(undefined, { code: 'APPROVAL_NOT_FOUND' })
+    )
+
+    renderHook(() => useExecutionApprovalPanel('exec-1', '?approval=missing-approval', makeNodeClick(), undefined))
+
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    expect(showError).toHaveBeenCalledWith({
+      title: 'Failed to load approval',
+      description: 'This approval is no longer available. It may have been resolved or deleted.',
+    })
+    expect(mockFetchApprovals).not.toHaveBeenCalled()
   })
 
   it('auto-detection shows error when fetch fails', async () => {
@@ -584,7 +621,7 @@ describe('useExecutionApprovalPanel', () => {
 
   it('clears handledApprovalId when URL param is removed', async () => {
     const { useFetchApprovalForUrlParam } = await import('./useFetchApprovalForUrlParam')
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(mockApproval)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState(mockApproval))
     mockFetchApprovals.mockResolvedValue([mockApproval])
 
     const { result, rerender } = renderHook(
@@ -602,7 +639,7 @@ describe('useExecutionApprovalPanel', () => {
     expect(result.current.panelOpen).toBe(true)
 
     // Now remove the URL param
-    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(undefined)
+    vi.mocked(useFetchApprovalForUrlParam).mockReturnValue(urlApprovalFetchState())
 
     rerender({ search: '' })
     await act(async () => {

@@ -55,8 +55,31 @@ export function useExecutionApprovalPanel(
     return new URLSearchParams(searchParams).get('approval')
   }, [searchParams])
 
-  const urlApproval = useFetchApprovalForUrlParam(searchParams)
+  const {
+    approval: urlApproval,
+    error: urlApprovalError,
+    isPending: urlApprovalPending,
+  } = useFetchApprovalForUrlParam(searchParams)
   const [handledApprovalId, setHandledApprovalId] = useState<string | null>(null)
+  const lastUrlApprovalErrorKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    lastUrlApprovalErrorKeyRef.current = null
+  }, [approvalIdFromUrl])
+
+  useEffect(() => {
+    if (!approvalIdFromUrl || urlApprovalPending || !urlApprovalError) {
+      return
+    }
+    const alert = getApprovalLoadErrorAlert(urlApprovalError)
+    const key = `${approvalIdFromUrl}::${alert.description}`
+    if (lastUrlApprovalErrorKeyRef.current === key) {
+      return
+    }
+    lastUrlApprovalErrorKeyRef.current = key
+    showError(alert)
+  }, [approvalIdFromUrl, urlApprovalError, urlApprovalPending, showError])
+
   if (!approvalIdFromUrl && handledApprovalId !== null) {
     setHandledApprovalId(null)
   } else if (urlApproval?.id && urlApproval.id !== handledApprovalId) {

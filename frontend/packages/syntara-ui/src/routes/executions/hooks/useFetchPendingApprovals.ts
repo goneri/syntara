@@ -49,7 +49,7 @@ export function useFetchPendingApprovals(executionId: string): UseFetchPendingAp
     if (!executionId) return []
     setIsLoading(true)
     try {
-      const result = await refetch()
+      const result = await refetch({ throwOnError: true })
       const resources = result.data?.resources ?? []
       return resources.filter(isValidApproval)
     } finally {

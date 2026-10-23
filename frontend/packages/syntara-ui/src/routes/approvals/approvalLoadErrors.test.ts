@@ -9,6 +9,18 @@ describe('getApprovalLoadErrorDescription', () => {
     )
   })
 
+  it('maps approval-not-found error codes without HTTP status', () => {
+    expect(getApprovalLoadErrorDescription({ code: 'APPROVAL_NOT_FOUND' })).toBe(
+      'This approval is no longer available. It may have been resolved or deleted.'
+    )
+    expect(getApprovalLoadErrorDescription({ code: 'RESOURCE_NOT_FOUND' })).toBe(
+      'This approval is no longer available. It may have been resolved or deleted.'
+    )
+    expect(getApprovalLoadErrorDescription({ code: 'HTTP_404' })).toBe(
+      'This approval is no longer available. It may have been resolved or deleted.'
+    )
+  })
+
   it('maps 403 to a permission message', () => {
     expect(getApprovalLoadErrorDescription({ response: { status: 403 } })).toBe(
       'You do not have permission to view this approval.'

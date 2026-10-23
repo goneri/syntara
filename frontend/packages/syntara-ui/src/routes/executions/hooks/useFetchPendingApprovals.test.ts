@@ -99,7 +99,25 @@ describe('useFetchPendingApprovals', () => {
     })
 
     expect(fetchedApprovals).toEqual(mockApprovals)
-    expect(mockRefetch).toHaveBeenCalledTimes(1)
+    expect(mockRefetch).toHaveBeenCalledWith({ throwOnError: true })
+  })
+
+  it('throws when refetch resolves with an error (TanStack Query v5)', async () => {
+    const apiError = { code: 'AUTHORIZATION_DENIED' }
+    mockRefetch.mockImplementation(async (options?: { throwOnError?: boolean }) => {
+      if (options?.throwOnError) {
+        throw apiError
+      }
+      return { data: undefined, error: apiError }
+    })
+
+    const { result } = renderHook(() => useFetchPendingApprovals('exec-1'), {
+      wrapper: createWrapper(),
+    })
+
+    await act(async () => {
+      await expect(result.current.fetchApprovals()).rejects.toEqual(apiError)
+    })
   })
 
   it('handles fetch errors gracefully', async () => {
