@@ -20,6 +20,7 @@ from syntara.workflows.models.workflow_version import WorkflowVersion
 from syntara.workflows.services.execution_service import ExecutionService
 from syntara.workflows.services.form_trigger import (
     record_form_trigger_submission as _real_record_form_trigger_submission,
+    validate_form_trigger_submission,
 )
 
 
@@ -93,7 +94,7 @@ class TestTriggerInputDispatch:
     def test_form_submission_helper_returns_cleaned_data(self) -> None:
         trigger = _form_trigger(_field("text", "name"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"name": "Ada"})
+        normalized = validate_form_trigger_submission(trigger, {"name": "Ada"})
 
         assert normalized.input_data == {"name": "Ada"}
         assert normalized.form_schema is not None
@@ -107,7 +108,7 @@ class TestFormTriggerSubmissionCleaning:
     def test_number_is_coerced_and_email_domain_normalized(self) -> None:
         trigger = _form_trigger(_field("number", "count"), _field("email", "contact"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(
+        normalized = validate_form_trigger_submission(
             trigger,
             {"count": "42", "contact": "Bob@Example.COM"},
         )
@@ -119,7 +120,7 @@ class TestFormTriggerSubmissionCleaning:
     def test_optional_absent_field_is_omitted(self) -> None:
         trigger = _form_trigger(_field("text", "required", required=True), _field("text", "optional"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"required": "value"})
+        normalized = validate_form_trigger_submission(trigger, {"required": "value"})
 
         assert normalized.input_data == {"required": "value"}
         assert normalized.form_schema is not None
@@ -133,7 +134,7 @@ class TestFormTriggerSubmissionCleaning:
         )
         trigger = _form_trigger(*fields)
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"required": "value"})
+        normalized = validate_form_trigger_submission(trigger, {"required": "value"})
 
         assert len(normalized.input_data) == 1
         assert normalized.form_schema is not None
@@ -143,7 +144,7 @@ class TestFormTriggerSubmissionCleaning:
     def test_default_is_applied(self) -> None:
         trigger = _form_trigger(_field("text", "name", default="Ada"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {})
+        normalized = validate_form_trigger_submission(trigger, {})
 
         assert normalized.input_data == {"name": "Ada"}
         assert normalized.form_schema is not None
@@ -153,7 +154,7 @@ class TestFormTriggerSubmissionCleaning:
     def test_date_is_normalized_to_iso_string(self) -> None:
         trigger = _form_trigger(_field("date", "start"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"start": {"date": "2026-02-14"}})
+        normalized = validate_form_trigger_submission(trigger, {"start": {"date": "2026-02-14"}})
 
         assert normalized.input_data == {"start": "2026-02-14"}
         assert normalized.form_schema is not None
@@ -163,7 +164,7 @@ class TestFormTriggerSubmissionCleaning:
     def test_checkbox_on_is_coerced_to_true(self) -> None:
         trigger = _form_trigger(_field("checkbox", "confirmed"))
 
-        normalized = ExecutionService._validate_form_trigger_submission(trigger, {"confirmed": "on"})
+        normalized = validate_form_trigger_submission(trigger, {"confirmed": "on"})
 
         assert normalized.input_data == {"confirmed": True}
         assert normalized.form_schema is not None
@@ -173,7 +174,7 @@ class TestFormTriggerSubmissionCleaning:
         trigger = _form_trigger(_field("text", "name"), _field("text", "defaulted", default="default"))
         submitted = {"name": "Ada"}
 
-        ExecutionService._validate_form_trigger_submission(trigger, submitted)
+        validate_form_trigger_submission(trigger, submitted)
 
         assert submitted == {"name": "Ada"}
 
@@ -185,7 +186,7 @@ class TestFormTriggerSubmissionFailures:
         trigger = _form_trigger(_field("text", "name", required=True), node_id="request")
 
         with pytest.raises(FormDataValidationError) as exc_info:
-            ExecutionService._validate_form_trigger_submission(trigger, {})
+            validate_form_trigger_submission(trigger, {})
 
         assert [(error.field, error.code) for error in exc_info.value.errors] == [("name", "required")]
         assert exc_info.value.form_id == "request"
@@ -222,7 +223,7 @@ class TestFormTriggerSubmissionFailures:
         trigger = _form_trigger(*fields)
 
         with pytest.raises(FormDataValidationError) as exc_info:
-            ExecutionService._validate_form_trigger_submission(trigger, submitted)
+            validate_form_trigger_submission(trigger, submitted)
 
         assert expected_code in {error.code for error in exc_info.value.errors}
 
@@ -233,7 +234,7 @@ class TestFormTriggerSubmissionFailures:
         )
 
         with pytest.raises(FormDataValidationError) as exc_info:
-            ExecutionService._validate_form_trigger_submission(trigger, {"count": "not-a-number", "unknown": 1})
+            validate_form_trigger_submission(trigger, {"count": "not-a-number", "unknown": 1})
 
         assert {(error.field, error.code) for error in exc_info.value.errors} == {
             ("required_name", "required"),
@@ -257,7 +258,7 @@ class TestFormTriggerSubmissionFailures:
     )
     def test_invalid_stored_definition_is_a_trigger_validation_error(self, trigger: dict[str, Any]) -> None:
         with pytest.raises(TriggerValidationError, match="form definition"):
-            ExecutionService._validate_form_trigger_submission(trigger, {})
+            validate_form_trigger_submission(trigger, {})
 
     def test_dynamic_options_are_rejected_for_form_triggers(self) -> None:
         trigger = _form_trigger(
@@ -274,13 +275,13 @@ class TestFormTriggerSubmissionFailures:
         )
 
         with pytest.raises(TriggerValidationError, match="form definition"):
-            ExecutionService._validate_form_trigger_submission(trigger, {"environment": "staging"})
+            validate_form_trigger_submission(trigger, {"environment": "staging"})
 
     def test_wrong_typed_default_is_a_trigger_validation_error(self) -> None:
         trigger = _form_trigger(_field("number", "count", default="not-a-number"))
 
         with pytest.raises(TriggerValidationError, match="form definition"):
-            ExecutionService._validate_form_trigger_submission(trigger, {})
+            validate_form_trigger_submission(trigger, {})
 
 
 def _service_for_execution(trigger_node: dict[str, Any]) -> tuple[ExecutionService, Mock, Mock]:

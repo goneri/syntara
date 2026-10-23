@@ -7,12 +7,11 @@ HTTP/API concerns in the FastAPI endpoints.
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from time import monotonic
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 import jsonschema
 import structlog
-from pydantic import ValidationError
 from referencing.exceptions import Unresolvable
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
@@ -32,9 +31,6 @@ from syntara.core.models import User
 from syntara.core.services import BaseService
 from syntara.core.services.extensions import ConvertResourceMixin, EnrichQueryMixin
 from syntara.core.services.user_reference_resolution import UserReferenceResolverMixin
-from syntara.forms.exceptions import FormDataValidationError
-from syntara.forms.models.form_fields import DynamicOptions, FormDefinition, ResolvedOptions
-from syntara.forms.validators.submission import validate_form_submission
 from syntara.metrics.dependencies import get_metrics_recorder
 from syntara.metrics.emission import emit_completion_metrics
 from syntara.metrics.interface_tag import interface_context_var
@@ -69,7 +65,11 @@ from syntara.workflows.models.execution import (
 from syntara.workflows.models.workflow import Workflow
 from syntara.workflows.models.workflow_definition import WorkflowDefinition
 from syntara.workflows.models.workflow_version import WorkflowVersion
-from syntara.workflows.services.form_trigger import FormSchemaSummary, record_form_trigger_submission
+from syntara.workflows.services.form_trigger import (
+    NormalizedTriggerInput,
+    record_form_trigger_submission,
+    validate_form_trigger_submission,
+)
 from syntara.workflows.services.invocation_cancellation import cancel_invocations_for_execution
 from syntara.workflows.utils.workflow_metadata import build_workflow_metadata, resolve_user_display_name
 from syntara.workflows.workflow_engine.models.workflow_definition import (
@@ -85,13 +85,6 @@ if TYPE_CHECKING:
 logger = structlog.stdlib.get_logger(__name__)
 
 MAX_CALLBACK_ERROR_MSG_LENGTH = 500
-
-
-class NormalizedTriggerInput(NamedTuple):
-    """Validated trigger input, with a form schema summary when applicable."""
-
-    input_data: dict[str, Any]
-    form_schema: FormSchemaSummary | None
 
 
 async def count_active_executions(session: "AsyncSession") -> int:
@@ -307,67 +300,6 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
             raise TriggerValidationError(msg) from e
 
     @staticmethod
-    def _validate_form_trigger_submission(
-        trigger_node: dict[str, Any],
-        input_data: dict[str, Any],
-        *,
-        workflow_id: UUID | None = None,
-    ) -> NormalizedTriggerInput:
-        """Validate and normalize a form-trigger submission.
-
-        Returns the same cleaned value shape used by form prompt
-        submissions. Form Triggers additionally reject dynamic options because
-        they have no upstream values from which to resolve them.
-        """
-        trigger_node_id = trigger_node.get("id")
-        validation_context = {
-            "workflow_id": workflow_id,
-            "request_id": request_id_context_var.get(),
-            "trigger_node_id": trigger_node_id,
-        }
-        raw_parameters = trigger_node.get("parameters")
-        raw_form_definition = raw_parameters.get("form_definition") if isinstance(raw_parameters, dict) else None
-        try:
-            form_definition = FormDefinition.model_validate(raw_form_definition)
-        except ValidationError as exc:
-            error_count = len(exc.errors())
-            logger.warning(
-                "Form trigger has an invalid form definition",
-                error_type=type(exc).__name__,
-                error_count=error_count,
-                **validation_context,
-            )
-            msg = "Form trigger has an invalid form definition"
-            raise TriggerValidationError(msg) from None
-
-        if any(
-            isinstance(getattr(field, "options", None), (DynamicOptions, ResolvedOptions))
-            for field in form_definition.fields
-        ):
-            logger.error("Form trigger has unsupported dynamic options", **validation_context)
-            msg = "Form trigger form definition contains unsupported dynamic options"
-            raise TriggerValidationError(msg)
-
-        try:
-            cleaned_input = validate_form_submission(form_definition, input_data)
-            field_types = sorted({str(field.type) for field in form_definition.fields})
-            return NormalizedTriggerInput(
-                input_data=cleaned_input,
-                form_schema=FormSchemaSummary(
-                    field_types=field_types,
-                    field_count=len(form_definition.fields),
-                ),
-            )
-        except FormDataValidationError as exc:
-            logger.warning(
-                "Form trigger submission validation failed",
-                error_count=len(exc.errors),
-                **validation_context,
-            )
-            # Re-raise with the trigger node id attached for log/diagnostic context.
-            raise FormDataValidationError(exc.errors, form_id=trigger_node_id) from exc
-
-    @staticmethod
     def _normalize_trigger_input(
         trigger_node: dict[str, Any],
         input_data: dict[str, Any],
@@ -383,7 +315,7 @@ class ExecutionService(UserReferenceResolverMixin, BaseService):
         the existing JSON Schema defaults and validation behavior.
         """
         if trigger_node.get("type") == NodeType.FORM_TRIGGER:
-            normalized = ExecutionService._validate_form_trigger_submission(
+            normalized = validate_form_trigger_submission(
                 trigger_node,
                 input_data,
                 workflow_id=workflow_id,

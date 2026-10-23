@@ -1,19 +1,25 @@
-"""Form-trigger specific logic, kept out of the shared execution path.
+"""Form-trigger validation and observability.
 
-Currently holds submission observability. ``record_form_trigger_submission`` is
-fire-and-forget: nothing here may fail a submission.
+``record_form_trigger_submission`` is fire-and-forget: observability failures
+must never fail a submission.
 """
 
 from __future__ import annotations
 
 from time import monotonic
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import structlog
+from pydantic import ValidationError
 
 from syntara.audit.dispatcher import AuditEventDispatcher
+from syntara.audit.emitter import request_id_context_var
+from syntara.forms.exceptions import FormDataValidationError
+from syntara.forms.models.form_fields import DynamicOptions, FormDefinition, ResolvedOptions
+from syntara.forms.validators.submission import validate_form_submission
 from syntara.metrics.types import ComponentLabel, MetricType
 from syntara.workflows.audit.form_trigger import FormTriggerSubmittedEvent
+from syntara.workflows.exceptions import TriggerValidationError
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -36,6 +42,74 @@ class FormSchemaSummary(NamedTuple):
     field_count: int
 
 
+class NormalizedTriggerInput(NamedTuple):
+    """Validated trigger input, with a form schema summary when applicable."""
+
+    input_data: dict[str, Any]
+    form_schema: FormSchemaSummary | None
+
+
+def validate_form_trigger_submission(
+    trigger_node: dict[str, Any],
+    input_data: dict[str, Any],
+    *,
+    workflow_id: UUID | None = None,
+) -> NormalizedTriggerInput:
+    """Validate and normalize a form-trigger submission.
+
+    Returns the same cleaned value shape used by form prompt submissions. Form
+    Triggers additionally reject dynamic options because they have no upstream
+    values from which to resolve them.
+    """
+    trigger_node_id = trigger_node.get("id")
+    validation_context = {
+        "workflow_id": workflow_id,
+        "request_id": request_id_context_var.get(),
+        "trigger_node_id": trigger_node_id,
+    }
+    raw_parameters = trigger_node.get("parameters")
+    raw_form_definition = raw_parameters.get("form_definition") if isinstance(raw_parameters, dict) else None
+    try:
+        form_definition = FormDefinition.model_validate(raw_form_definition)
+    except ValidationError as exc:
+        error_count = len(exc.errors())
+        logger.warning(
+            "Form trigger has an invalid form definition",
+            error_type=type(exc).__name__,
+            error_count=error_count,
+            **validation_context,
+        )
+        msg = "Form trigger has an invalid form definition"
+        raise TriggerValidationError(msg) from None
+
+    if any(
+        isinstance(getattr(field, "options", None), (DynamicOptions, ResolvedOptions))
+        for field in form_definition.fields
+    ):
+        logger.error("Form trigger has unsupported dynamic options", **validation_context)
+        msg = "Form trigger form definition contains unsupported dynamic options"
+        raise TriggerValidationError(msg)
+
+    try:
+        cleaned_input = validate_form_submission(form_definition, input_data)
+        field_types = sorted({str(field.type) for field in form_definition.fields})
+        return NormalizedTriggerInput(
+            input_data=cleaned_input,
+            form_schema=FormSchemaSummary(
+                field_types=field_types,
+                field_count=len(form_definition.fields),
+            ),
+        )
+    except FormDataValidationError as exc:
+        logger.warning(
+            "Form trigger submission validation failed",
+            error_count=len(exc.errors),
+            **validation_context,
+        )
+        # Re-raise with the trigger node id attached for log/diagnostic context.
+        raise FormDataValidationError(exc.errors, form_id=trigger_node_id) from exc
+
+
 def record_form_trigger_submission(
     *,
     recorder: MetricsRecorder,
@@ -48,12 +122,7 @@ def record_form_trigger_submission(
     trigger_node_id: str,
     form_schema: FormSchemaSummary,
 ) -> None:
-    """Record submission latency and dispatch the metadata-only audit event.
-
-    ``submission_started`` must be a ``time.monotonic()`` reading taken earlier
-    in this same process. Never derive this latency from a persisted execution
-    timestamp or Temporal history; those clocks may live on other hosts.
-    """
+    """Record submission latency and dispatch the metadata-only audit event."""
     try:
         try:
             recorder.record(
