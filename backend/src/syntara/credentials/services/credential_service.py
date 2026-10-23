@@ -187,6 +187,30 @@ def _validate_field_constraints(inputs: dict[str, Any], type_inputs: dict[str, A
         raise CredentialValidationError(msg)
 
 
+def _reject_explicit_blank_required(
+    inputs: dict[str, Any],
+    required: set[str],
+    field_defs: dict[str, Any],
+    *,
+    allow_sentinel: bool,
+) -> None:
+    """Reject a required string that a PATCH sets to whitespace.
+
+    Omitted fields and the ``$encrypted$`` sentinel stay stored. This runs
+    only for PATCH, where the create-time required check is skipped.
+    """
+    if not allow_sentinel:
+        return
+    blank_required = sorted(
+        field_id
+        for field_id, value in inputs.items()
+        if field_id in required and _is_blank_required_string(field_id, value, field_defs)
+    )
+    if blank_required:
+        msg = f"Required field(s) cannot be blank: {', '.join(blank_required)}"
+        raise CredentialValidationError(msg)
+
+
 def _is_blank_required_string(field_id: str, value: Any, field_defs: dict[str, Any]) -> bool:  # noqa: ANN401
     """Return True when a required string field holds only whitespace.
 
@@ -238,6 +262,8 @@ def _validate_inputs(
                 f"for field(s): {', '.join(sentinel_fields)}"
             )
             raise CredentialValidationError(msg)
+
+    _reject_explicit_blank_required(inputs, required, field_defs, allow_sentinel=allow_sentinel)
 
     # Check required fields — only on create (PATCH is partial, missing fields are preserved)
     if not allow_sentinel:

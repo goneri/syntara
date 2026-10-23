@@ -1126,6 +1126,20 @@ class TestValidateInputs:
         # PATCH mode: missing required fields are OK (they're preserved from existing)
         _validate_inputs({}, BEARER_TYPE_INPUTS, allow_sentinel=True)
 
+    def test_patch_rejects_blank_required_string(self) -> None:
+        with pytest.raises(CredentialValidationError, match="cannot be blank: username"):
+            _validate_inputs({"username": ""}, BASIC_AUTH_TYPE_INPUTS, allow_sentinel=True)
+
+    def test_patch_rejects_whitespace_only_required_string(self) -> None:
+        with pytest.raises(CredentialValidationError, match="cannot be blank: username"):
+            _validate_inputs({"username": "   "}, BASIC_AUTH_TYPE_INPUTS, allow_sentinel=True)
+
+    def test_patch_accepts_encrypted_sentinel_for_required_field(self) -> None:
+        _validate_inputs({"password": ENCRYPTED_SENTINEL}, BASIC_AUTH_TYPE_INPUTS, allow_sentinel=True)
+
+    def test_patch_accepts_non_blank_required_value_with_whitespace(self) -> None:
+        _validate_inputs({"username": "  listener  "}, BASIC_AUTH_TYPE_INPUTS, allow_sentinel=True)
+
     def test_unknown_fields_still_rejected_in_patch_mode(self) -> None:
         with pytest.raises(CredentialValidationError, match="Unknown field"):
             _validate_inputs({"bogus": "val"}, BEARER_TYPE_INPUTS, allow_sentinel=True)
