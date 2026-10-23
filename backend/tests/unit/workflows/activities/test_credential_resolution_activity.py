@@ -465,4 +465,6 @@ class TestCrossProjectCredentialResolution:
         assert extra_vars["kafka_username"] == "listener"
         assert extra_vars["kafka_password"] == "  listener-secret  "  # noqa: S105
         assert result[ACTIVITY_ID]["_secret_values"] == ["  listener-secret  "]
-        assert mock_ss.retrieve_secret.await_count == 2
+        assert mock_ss.retrieve_secret.await_count == 1
+        loaded_models = [call.args[0] for call in mock_session.get.await_args_list]
+        assert Credential not in loaded_models

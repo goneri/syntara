@@ -24,7 +24,7 @@ from syntara.credentials.lib.injector_resolver import InjectorResolver, Resolved
 from syntara.credentials.lib.kafka_connection import (
     KAFKA_CONNECTION_TYPE_NAME,
     KafkaSecurityProtocol,
-    resolve_listener_kafka_login,
+    resolve_supplied_kafka_login,
 )
 from syntara.credentials.models.credential import Credential
 from syntara.credentials.models.credential_type import CredentialType
@@ -147,10 +147,11 @@ async def _resolve_single_credential(
     if cred_type.name == KAFKA_CONNECTION_TYPE_NAME:
         runtime_credential_id = credential.id if isinstance(credential.id, UUID) else UUID(str(credential.id))
         try:
-            login = await resolve_listener_kafka_login(
-                session,
-                secret_service,
-                runtime_credential_id=runtime_credential_id,
+            # decrypted_inputs is already this credential's secret. Applying the
+            # Kafka rules here avoids a second credential load and secret read.
+            login = resolve_supplied_kafka_login(
+                credential_id=runtime_credential_id,
+                decrypted_inputs=decrypted_inputs,
                 security_protocol=KafkaSecurityProtocol.SASL_SSL,
             )
         except CredentialValidationError as exc:
