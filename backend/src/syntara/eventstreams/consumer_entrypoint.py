@@ -12,7 +12,6 @@ from syntara.core.database.session import AsyncSessionLocal, engine
 from syntara.core.lib.encryption import SecretEncryptor, key_from_string
 from syntara.core.logging.lifecycle import start_loggers, stop_loggers
 from syntara.eventstreams.adapters.runner_factory import ManagedRunnerFactory
-from syntara.eventstreams.consumer_health import EventWorkerHealthServer
 from syntara.eventstreams.consumer_lifecycle import run_event_worker, settle_worker_tasks
 from syntara.eventstreams.consumer_service import EventWorkerManager
 from syntara.eventstreams.handlers.workflow_launcher import TemporalWorkflowLauncher
@@ -54,8 +53,7 @@ async def _run_connected(
         AsyncSessionLocal, launcher, worker_id=owner, admission=admission, resources=resources
     )
     hints = SubscriptionHintListener(manager.request_reconcile)
-    async with EventWorkerHealthServer(lambda: manager.ready and not shutdown.is_set()):
-        await run_event_worker(manager, recovery, resources, hints, shutdown_event=shutdown)
+    await run_event_worker(manager, recovery, resources, hints, shutdown_event=shutdown)
 
 
 async def _connect_temporal(shutdown: asyncio.Event) -> TemporalExecutionService | None:
