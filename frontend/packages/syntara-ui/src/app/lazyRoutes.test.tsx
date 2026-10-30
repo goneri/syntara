@@ -18,6 +18,7 @@ import {
   Glossary,
   IntegrationForm,
   Integrations,
+  SettingsCategoryRoute,
 } from './lazyRoutes'
 
 // Stub every route component so lazy resolution succeeds without
@@ -32,6 +33,9 @@ vi.mock('../routes/configuration/integrations/form/IntegrationForm', () => ({
 }))
 vi.mock('../routes/configuration/integrations/Integrations', () => ({
   default: () => <div>Integrations</div>,
+}))
+vi.mock('../routes/configuration/settings/SettingsCategoryRoute', () => ({
+  SettingsCategoryRoute: () => <div>SettingsCategoryRoute</div>,
 }))
 vi.mock('../routes/documentation/glossary/Glossary', () => ({ default: () => <div>Glossary</div> }))
 vi.mock('../routes/approvals/Approvals', () => ({ default: () => <div>Approvals</div> }))
@@ -62,6 +66,7 @@ describe('lazyRoutes', () => {
       ExecutionDetail,
       IntegrationForm,
       Integrations,
+      SettingsCategoryRoute,
       Glossary,
       Approvals,
       ExecutionPlane,
@@ -85,6 +90,7 @@ describe('lazyRoutes', () => {
       ['ExecutionDetail', ExecutionDetail, 'ExecutionDetail'],
       ['IntegrationForm', IntegrationForm, 'IntegrationForm'],
       ['Integrations', Integrations, 'Integrations'],
+      ['SettingsCategoryRoute', SettingsCategoryRoute, 'SettingsCategoryRoute'],
       ['Glossary', Glossary, 'Glossary'],
       ['Approvals', Approvals, 'Approvals'],
       ['ExecutionPlane', ExecutionPlane, 'ExecutionPlane'],
