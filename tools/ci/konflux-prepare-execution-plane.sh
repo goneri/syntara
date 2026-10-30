@@ -15,8 +15,6 @@
 #      EP_CREDENTIAL_RESOLUTION_CALLBACK_URL to AO's
 #      /api/execution_plane/v1/commands ingress.
 #   5. Registers the Kind cluster as an EP cluster via the EP API.
-#   6. Raises the Temporal server memory limit before AO API tests dispatch
-#      Bash-heavy workflows.
 #
 # aap-dev builds the script-node image and points myao-worker at the operator
 # EP (APP_SCRIPT_NODES_ENABLED / APP_NODE_CONTAINER_IMAGES / APP_EP_API_URL)
