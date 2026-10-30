@@ -152,7 +152,8 @@ The items below cover patterns ESLint **cannot** catch:
 ```bash
 # Development
 npm start                  # Start all services (UI, mock API)
-npm run start:ui           # Start UI only
+npm run start:ui           # Start the UI package dev script (Vite + Storybook)
+npm run start:e2e --prefix packages/syntara-ui # Start Vite only for E2E
 npm run start:mock-api     # Start mock API only
 
 # Testing
@@ -165,7 +166,7 @@ npm run e2e:visual-regression:update # Same, with --update-snapshots (see packag
 
 # E2E test suite tags — Playwright tags that control where each test runs:
 #   @pr-check      Fast critical-path tests; select with --grep @pr-check
-#   @local-only    Visual regression tests; excluded from all CI automatically
+#   @local-only    Mock-dependent audits/local screenshots; not a blanket CI exclusion
 # Full rules: .agents/skills/frontend-playwright-e2e/SKILL.md → "Test Suite Tags"
 
 For a known flaky test that needs temporary quarantine from CI, follow the
@@ -220,7 +221,7 @@ For how the UI is structured, see these comprehensive guides:
 | **New here / onboarding**           | [`docs/ai-assisted-development.md`](docs/ai-assisted-development.md) -- AI agent prompts, screenshot workflow, full example                                                                                                                                                                                                                                                |
 | **API integration**                 | [`docs/data-flow.md`](docs/data-flow.md) -- OpenAPI contracts and type-safe clients                                                                                                                                                                                                                                                                                        |
 | **Workflow transformations**        | [`docs/data-flow.md`](docs/data-flow.md) -- Nested to flat conversions                                                                                                                                                                                                                                                                                                     |
-| **Step registry (`NodeRegistry`)**  | [`docs/architecture.md`](docs/architecture.md) -- auto-discovery of step types                                                                                                                                                                                                                                                                                             |
+| **Step registry (`StepRegistry`)**  | [`docs/architecture.md`](docs/architecture.md) -- auto-discovery of step types                                                                                                                                                                                                                                                                                             |
 | **Builder internals**               | [`docs/architecture.md`](docs/architecture.md) -- "Builder internals (advanced)"                                                                                                                                                                                                                                                                                           |
 | **State management**                | [`docs/zustand-architecture.md`](docs/zustand-architecture.md) -- Zustand guide                                                                                                                                                                                                                                                                                            |
 | **WebSocket / real-time**           | [`docs/websocket-architecture.md`](docs/websocket-architecture.md) -- multi-channel infrastructure                                                                                                                                                                                                                                                                         |
@@ -235,7 +236,7 @@ For how the UI is structured, see these comprehensive guides:
 | **Error handling patterns**         | [`docs/error-handling.md`](docs/error-handling.md) -- RFC 9457, error utilities, retry support                                                                                                                                                                                                                                                                             |
 | **Testing standards**               | [`.agents/skills/frontend-testing-guidelines/SKILL.md`](../.agents/skills/frontend-testing-guidelines/SKILL.md) -- coverage, queries, accessibility                                                                                                                                                                                                                        |
 | **Visual regression testing**       | [`packages/syntara-ui/VISUAL_REGRESSION.md`](packages/syntara-ui/VISUAL_REGRESSION.md) -- page registry, baselines, manual-only workflow                                                                                                                                                                                                                                   |
-| **New workflow step type**          | `packages/syntara-ui/src/routes/builder/registry/nodes/QUICK_START.md`                                                                                                                                                                                                                                                                                                     |
+| **New workflow step type**          | `packages/syntara-ui/src/routes/builder/registry/steps/QUICK_START.md`                                                                                                                                                                                                                                                                                                     |
 | **UX / PatternFly design system**   | [`.agents/skills/frontend-patternfly-ux/SKILL.md`](../.agents/skills/frontend-patternfly-ux/SKILL.md) -- PF6 patterns                                                                                                                                                                                                                                                      |
 | **Library docs / llms.txt links**   | [`.agents/skills/frontend-library-references/SKILL.md`](../.agents/skills/frontend-library-references/SKILL.md) -- fetch before writing React, Zod, Zustand, Vitest, Vite, TanStack Query, or TanStack Router code                                                                                                                                                         |
 | **Permission gating / RBAC**        | [`docs/permissions-rbac.md`](docs/permissions-rbac.md) -- `useCanI`, `DisabledWithTooltip`, `ProtectedRoute`, nav filtering, mock API roles, ungated inventory                                                                                                                                                                                                             |
@@ -370,7 +371,7 @@ See: [`docs/architecture.md`](docs/architecture.md#api-filtering-architecture) �
 
 - **React DevTools**: Inspect component props and Zustand state
 - **Console**: `useWorkflowStore.getState()` to inspect workflow store
-- Steps not appearing → check `NodeRegistry`; edges not connecting → verify handle IDs; state not updating → check store actions
+- Steps not appearing → check `StepRegistry`; edges not connecting → verify handle IDs; state not updating → check store actions
 
 #### How do I format dates?
 
