@@ -54,6 +54,12 @@ spec:
       value: '{{revision}}'
     - name: ao-pr-number
       value: '{{pull_request_number}}'
+    # Pin aap-dev on the sdk-script-step branch: the EP e2e needs the
+    # ao-sdk-script-step image wiring and the EP opt-in fixes from
+    # ansible/aap-dev#1138 until they merge on main. Drops together with
+    # the other pins below.
+    - name: aap-dev-revision
+      value: AAP-90779-ep-from-source-sdk-script-step
     - name: ao-operator-revision
       value: AAP-90779-ep-from-source
     - name: ao-operator-git-url
