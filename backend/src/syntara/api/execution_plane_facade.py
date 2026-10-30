@@ -248,7 +248,7 @@ async def get_execution_target(target_id: UUID) -> ExecutionTargetFacadeRead:
     dependencies=[Depends(PermissionChecker("execution_target", "update", resource_id_param="target_id"))],
 )
 async def update_execution_target(target_id: UUID, data: ExecutionTargetUpdate) -> ExecutionTargetFacadeRead:
-    """Patch target placement, routing labels, name, or default selection through EP."""
+    """Patch target placement, routing labels, name, enabled state, or default selection through EP."""
     async with _target_client() as client:
         return ExecutionTargetFacadeRead.model_validate(await update_target(client, target_id, data))
 

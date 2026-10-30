@@ -51,7 +51,7 @@ export interface paths {
     head?: never
     /**
      * Update execution target
-     * @description Patch target placement, routing labels, name, or default selection through EP.
+     * @description Patch target placement, routing labels, name, enabled state, or default selection through EP.
      */
     patch: operations['update_execution_target']
     trace?: never
@@ -254,6 +254,8 @@ export interface components {
       }
       /** Is Default */
       is_default?: boolean
+      /** Enabled */
+      enabled?: boolean
     }
     /** HTTPValidationError */
     HTTPValidationError: {
