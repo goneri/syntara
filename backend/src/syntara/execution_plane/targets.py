@@ -43,6 +43,7 @@ class ExecutionTargetUpdate(SQLModel):
     placement: KubernetesTargetPlacement | SkipJsonSchema[None] = None
     labels: dict[str, str] | SkipJsonSchema[None] = None
     is_default: bool | SkipJsonSchema[None] = None
+    enabled: bool | SkipJsonSchema[None] = None
 
     @model_validator(mode="after")
     def check_fields(self) -> Self:

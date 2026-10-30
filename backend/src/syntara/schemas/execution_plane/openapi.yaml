@@ -274,7 +274,7 @@ paths:
       tags:
         - Execution Plane
       summary: Update execution target
-      description: Patch target placement, routing labels, name, or default selection through EP.
+      description: Patch target placement, routing labels, name, enabled state, or default selection through EP.
       operationId: update_execution_target
       security:
         - bearerAuth: []
@@ -760,6 +760,9 @@ components:
         is_default:
           type: boolean
           title: Is Default
+        enabled:
+          type: boolean
+          title: Enabled
       additionalProperties: false
       type: object
       minProperties: 1

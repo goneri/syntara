@@ -177,6 +177,18 @@ async def test_patch_keeps_omissions_and_explicit_clears(harness, include_type):
 
 
 @pytest.mark.asyncio
+async def test_patch_can_change_enabled_state(harness):
+    app, requests, _ = harness
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="https://ao.example") as client:
+        response = await client.patch(f"{PREFIX}/{TARGET_ID}", json={"enabled": False})
+
+    assert response.status_code == 200
+    command = json.loads(requests[0].content)["command"]
+    assert command["command_type"] == "execution_target.update"
+    assert command["payload"] == {"resource_id": str(TARGET_ID), "enabled": False}
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "patch",
     [
